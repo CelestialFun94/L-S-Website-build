@@ -8,6 +8,6 @@
     "check": "node --check app.js && node --check api/_lib.js && node --check api/auth.js && node --check api/inquiries.js && node --check api/dashboard.js"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   }
 }
