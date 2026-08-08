@@ -5,9 +5,12 @@
   "description": "Love & Sunshine public website and secure team workspace",
   "scripts": {
     "test": "node --test",
-    "check": "node --check public/app.js && node --check api/_lib.js && node --check api/auth.js && node --check api/inquiries.js && node --check api/dashboard.js"
+    "check": "node --check public/app.js && node --check api/_lib.js && node --check api/_stripe.js && node --check api/auth.js && node --check api/inquiries.js && node --check api/dashboard.js && node --check api/billing.js && node --check api/stripe-webhook.js"
   },
   "engines": {
     "node": "24.x"
+  },
+  "dependencies": {
+    "stripe": "22.4.0"
   }
 }

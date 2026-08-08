@@ -25,10 +25,18 @@ Create each account in the business owner’s name, with a Love & Sunshine-owned
 
 | Service | Purpose | Protected environment values |
 | --- | --- | --- |
-| Stripe | Invoices and payment links | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Stripe | Hosted invoices, finite payment plans, recurring retainers, portal links, and signed event synchronization | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | Resend | Transactional acknowledgement and billing email | `RESEND_API_KEY`, `EMAIL_FROM` |
 | Google Cloud | Google Calendar availability OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Microsoft Entra | Microsoft 365 / Outlook availability OAuth | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
 | Private object storage | Artist and project files | Provider-specific private bucket credentials |
 
 Confirm the legal business name, domain, public email, invoice terms, internal roles, and privacy/terms language before enabling payments, email, calendar booking, or private client files.
+
+## Stripe billing
+
+- The production webhook URL is `https://loveandsunshinenash.com/api/stripe-webhook` after custom-domain DNS finishes propagating. Until then, use `https://l-s-website-build.vercel.app/api/stripe-webhook`.
+- Subscribe the account webhook to: `checkout.session.completed`, `invoice.finalized`, `invoice.sent`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, `invoice.marked_uncollectible`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.succeeded`, `charge.refunded`, `subscription_schedule.completed`, `subscription_schedule.canceled`, and `subscription_schedule.aborted`.
+- The webhook verifies the raw request with `STRIPE_WEBHOOK_SECRET` before changing any data. Event IDs are recorded so Stripe retries are idempotent.
+- Keep the live Stripe resource connected only to Production. Preview and Development receive no Stripe secret unless a separate sandbox is deliberately connected later. Never create test charges in the live account.
+- `SUPABASE_SECRET_KEY` is server-only and lets signed Stripe events synchronize billing rows while all browser access remains protected by Row Level Security.

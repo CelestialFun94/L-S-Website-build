@@ -5,7 +5,10 @@ const resources = {
   artists: 'id,name,email,stage,status,next_step,created_at',
   projects: 'id,name,status,project_type,target_date,artist:artists(name),created_at',
   songs: 'id,title,status,split_status,project:projects(name),created_at',
-  invoices: 'id,invoice_number,status,amount_cents,due_date,artist:artists(name),created_at',
+  invoices: 'id,invoice_number,status,amount_cents,paid_cents,billing_type,description,due_date,payment_url,hosted_invoice_url,artist:artists(name),created_at',
+  payment_plans: 'id,status,installment_amount_cents,installment_count,installments_paid,interval,checkout_url,artist:artists(name),invoice:invoices(invoice_number),created_at',
+  retainers: 'id,status,description,amount_cents,interval,checkout_url,current_period_end,artist:artists(name),invoice:invoices(invoice_number),created_at',
+  payments: 'id,status,amount_cents,refunded_cents,currency,paid_at,invoice:invoices(invoice_number),artist:artists(name),created_at',
 };
 
 module.exports = async function handler(req, res) {
