@@ -10,8 +10,8 @@ These are the original brand files supplied for future website work. Keep these 
 
 The swatch sheet is the canonical color reference. Its printed palette includes gold, pale yellow, orange, and charcoal. Confirm exact hexadecimal values from the source sheet before a future theme-wide color replacement.
 
-Public website paths begin with `/public/images/brand/`, for example:
+Public website paths begin with `/images/brand/`, for example:
 
 ```html
-<img src="/public/images/brand/love-and-sunshine-primary-logo.png" alt="Love & Sunshine" />
+<img src="/images/brand/love-and-sunshine-primary-logo.png" alt="Love & Sunshine" />
 ```

@@ -2,13 +2,21 @@ const $ = (selector, element = document) => element.querySelector(selector);
 const $$ = (selector, element = document) => [...element.querySelectorAll(selector)];
 const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
 const friendly = value => String(value ?? '—').replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+const openModal = dialog => {
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else { dialog.setAttribute('open', ''); dialog.style.display = 'block'; }
+};
+const closeModal = dialog => {
+  if (typeof dialog.close === 'function') dialog.close();
+  else { dialog.removeAttribute('open'); dialog.style.display = ''; }
+};
 
 $('#year').textContent = new Date().getFullYear();
 $('#dashboard-date').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
-$$('[data-open]').forEach(button => button.addEventListener('click', () => $('#' + button.dataset.open).showModal()));
-$$('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
-$$('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }));
+$$('[data-open]').forEach(button => button.addEventListener('click', () => openModal($('#' + button.dataset.open))));
+$$('[data-close]').forEach(button => button.addEventListener('click', () => closeModal(button.closest('dialog'))));
+$$('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) closeModal(dialog); }));
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
@@ -57,7 +65,7 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
 }));
 
 function showDashboard(account) {
-  $('#admin').close();
+  closeModal($('#admin'));
   $('#dashboard').hidden = false;
   document.body.style.overflow = 'hidden';
   const name = account.profile.display_name || 'Team';
@@ -148,7 +156,7 @@ async function render(view = 'overview') {
     if (/sign in/i.test(error.message)) {
       $('#dashboard').hidden = true;
       document.body.style.overflow = '';
-      $('#admin').showModal();
+      openModal($('#admin'));
     } else {
       $('#view-content').innerHTML = `<div class="form-result error">${escapeHtml(error.message)}</div>`;
     }

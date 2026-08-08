@@ -11,7 +11,7 @@ An original public website and secure admin workspace for Love & Sunshine, an ar
 
 ## Run locally
 
-The public interface is dependency-free HTML, CSS, and browser JavaScript. Vercel Functions in `api/` provide server-side validation, secure session cookies, and Supabase access.
+The public interface lives in `public/` and is dependency-free HTML, CSS, and browser JavaScript. Vercel Functions in `api/` provide server-side validation, secure session cookies, and Supabase access.
 
 ```sh
 npm test
