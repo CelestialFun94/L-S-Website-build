@@ -1,23 +1,34 @@
 # Integration setup — Love & Sunshine
 
-This prototype deliberately has no backend, authentication, database, email sender, payment processor, calendar connection, file bucket, or secret store. It must not be used to process real artist data or payments.
+## Connected foundation
+
+| Service | Purpose | Configuration |
+| --- | --- | --- |
+| GitHub | Source control and change history | Repository access is authenticated through GitHub CLI; no token is committed |
+| Vercel | Public website and server-side API hosting | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
+| Supabase | Postgres database, Row Level Security, and team authentication | Schema tracked in `supabase/migrations/` |
+
+The Supabase publishable key is intentionally safe for public clients, but this application still routes writes through Vercel so requests can be validated and abuse controls can be extended. Never add a service-role key to browser code.
+
+## Team account setup
+
+1. Create each team member in **Supabase → Authentication → Users** using an owner-approved business email.
+2. Add the new user's UUID to `public.profiles` with an appropriate role: `owner`, `admin`, `operations`, `finance`, or `read_only`.
+3. Keep `active = true` only while the person should have workspace access.
+4. Team members sign in through **Team sign in** on the public site. The API stores access and refresh tokens in secure, HTTP-only cookies.
+
+An Auth user without a matching active profile cannot enter the workspace.
 
 ## Connect only when ready
 
-Create each account in the business owner’s name, with a Love & Sunshine-owned email address. Never paste secrets into documentation, chat, source control, or browser forms.
+Create each account in the business owner’s name, with a Love & Sunshine-owned email address. Never paste secrets into documentation, chat, source control, or public website forms.
 
-| Service | Purpose | Values to configure in a future `.env.local` |
+| Service | Purpose | Protected environment values |
 | --- | --- | --- |
-| Stripe | Test-mode invoices and payment links | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Stripe | Invoices and payment links | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | Resend | Transactional acknowledgement and billing email | `RESEND_API_KEY`, `EMAIL_FROM` |
 | Google Cloud | Google Calendar availability OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Microsoft Entra | Microsoft 365 / Outlook availability OAuth | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
-| Cloudflare R2 | Private file storage | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` |
-| OpenAI (optional) | Approval-gated AI operator | `OPENAI_API_KEY` |
+| Private object storage | Artist and project files | Provider-specific private bucket credentials |
 
-## Important next implementation decisions
-
-1. Select production authentication (for example, Supabase Auth or Auth.js) before team sign-in is enabled.
-2. Confirm the legal business name, domain, public email, tax policy, invoice terms, internal roles, and privacy/terms language.
-3. Choose whether “Chase” means merchant processing, bank reconciliation, manual payments, or a supported aggregation/import. Do not assume a Chase API.
-4. Build a server-side database and authorization layer before handling production client data, files, calendar tokens, payment details, or public form submissions.
+Confirm the legal business name, domain, public email, invoice terms, internal roles, and privacy/terms language before enabling payments, email, calendar booking, or private client files.
