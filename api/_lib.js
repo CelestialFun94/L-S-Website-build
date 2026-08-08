@@ -8,6 +8,13 @@ function env() {
   return { url: url.replace(/\/$/, ''), key };
 }
 
+function secretEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Server-side Supabase credentials are not configured.');
+  return { url: url.replace(/\/$/, ''), key };
+}
+
 function parseCookies(header = '') {
   return Object.fromEntries(header.split(';').map(v => v.trim()).filter(Boolean).map(v => {
     const index = v.indexOf('=');
@@ -34,6 +41,12 @@ async function supabase(path, options = {}) {
   const { url, key } = env();
   const headers = { apikey: key, 'Content-Type': 'application/json', ...options.headers };
   if (!headers.Authorization) headers.Authorization = `Bearer ${key}`;
+  return fetch(`${url}${path}`, { ...options, headers });
+}
+
+async function adminSupabase(path, options = {}) {
+  const { url, key } = secretEnv();
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...options.headers };
   return fetch(`${url}${path}`, { ...options, headers });
 }
 
@@ -76,4 +89,4 @@ function method(req, res, allowed) {
   return true;
 }
 
-module.exports = { clearSession, json, method, session, setSession, supabase };
+module.exports = { adminSupabase, clearSession, json, method, session, setSession, supabase };

@@ -31,5 +31,6 @@ Create Love & Sunshine-owned accounts directly with each provider before enablin
 - Supabase: the `love-and-sunshine` project stores public inquiries and workspace records. The schema migration is in `supabase/migrations/`.
 - Every exposed table has Row Level Security. Anonymous visitors may only create validated inquiries; signed-in team users must also have an active `profiles` record.
 - Authentication tokens are stored in secure, HTTP-only cookies and never exposed to browser JavaScript.
+- Stripe Billing supports one-time hosted invoices, finite installment plans, recurring retainers, customer records, payment history, and signature-verified webhook synchronization. Billing changes are limited to owner, admin, and finance roles.
 
 See `docs/INTEGRATION_SETUP.md` for the intended credentials and safeguards.
