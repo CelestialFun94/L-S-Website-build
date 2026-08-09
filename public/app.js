@@ -35,7 +35,7 @@ if (navigationToggle) {
     navigationToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
     navigationToggle.textContent = open ? 'Close' : 'Menu';
   });
-  $$('.site-header nav a').forEach(link => link.addEventListener('click', closeNavigation));
+  $$('.site-header nav a, .site-header nav button').forEach(control => control.addEventListener('click', closeNavigation));
   document.addEventListener('click', event => {
     const header = navigationToggle.closest('.site-header');
     if (header.classList.contains('menu-open') && !header.contains(event.target)) closeNavigation();

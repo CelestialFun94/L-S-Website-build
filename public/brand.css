@@ -40,8 +40,8 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
   text-decoration: none;
 }
 
-.header-logo-window { position: relative; z-index: 2; display: block; width: 500px; height: 174px; overflow: hidden; }
-.header-logo-window img { position: absolute; left: 50%; top: 48%; width: 86%; height: auto; transform: translate(-50%, -50%); filter: brightness(.88); }
+.header-logo-window { position: relative; z-index: 2; display: block; width: 500px; height: 178px; overflow: hidden; }
+.header-logo-window img { position: absolute; left: 50%; top: 43%; width: 86%; height: auto; transform: translate(-50%, -50%); filter: brightness(.88); }
 .header-sprinkles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .header-sprinkles span { position: absolute; display: block; line-height: 1; opacity: .72; user-select: none; }
 .header-sun { color: var(--sun-soft); }.header-heart { color: var(--orange); font-family: Georgia, serif; }
@@ -70,7 +70,10 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
   padding: 16px 0;
   border: 0;
 }
-.site-header .button-small { grid-column: 3; grid-row: 1; justify-self: end; }
+.header-actions { position: relative; z-index: 2; grid-column: 3; grid-row: 1; justify-self: end; display: grid; gap: 8px; justify-items: stretch; }
+.header-actions .button-small { width: 100%; }
+.header-action-cowrite { border: 1px solid var(--ink); background: var(--cream); color: var(--ink); }
+.nav-actions-mobile { display: none; }
 .brand-lockup { grid-column: 2; grid-row: 1; justify-self: center; }
 .nav-toggle {
   display: inline-flex;
@@ -256,7 +259,6 @@ dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
 }
 
 @media (max-width: 1020px) {
-  .site-header > .button { display: none; }
   .hero { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .hero-copy { padding: 90px 7vw; }
   .hero-marquee { grid-column: 1; }
@@ -275,6 +277,10 @@ dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
   html { scroll-padding-top: 18px; }
   .site-header { height: 120px; padding: 0 14px; }
   .header-logo-window { width: 270px; height: 108px; }
+  .header-logo-window img { top: 42%; width: 88%; }
+  .header-actions { display: none; }
+  .nav-actions-mobile { display: grid; gap: 9px; padding-top: 16px; }
+  .nav-actions-mobile .button { width: 100%; }
   .header-sun-left { left: -32px; top: -18px; font-size: 85px; }
   .header-heart-left { left: 47px; bottom: 12px; font-size: 23px; }
   .header-sun-right { right: -29px; bottom: -23px; font-size: 78px; }
