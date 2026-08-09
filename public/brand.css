@@ -9,7 +9,7 @@
   --muted: #6d675f;
 }
 
-html { scroll-padding-top: 116px; }
+html { scroll-padding-top: 24px; }
 body { background: var(--cream); color: var(--ink); }
 .dashboard[hidden] { display: none; }
 body:has(.dashboard:not([hidden])) .site-header,
@@ -17,10 +17,9 @@ body:has(.dashboard:not([hidden])) main,
 body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 
 .site-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 10;
-  height: 116px;
+  height: 132px;
   padding: 0 clamp(22px, 4vw, 64px);
   background: rgba(255, 250, 240, .96);
   backdrop-filter: blur(14px);
@@ -36,7 +35,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
   text-decoration: none;
 }
 
-.header-logo-window { position: relative; display: block; width: 270px; height: 108px; overflow: hidden; }
+.header-logo-window { position: relative; display: block; width: 320px; height: 122px; overflow: hidden; }
 .header-logo-window img { position: absolute; left: 50%; top: 48%; width: 92%; height: auto; transform: translate(-50%, -50%); }
 .site-header nav {
   display: none;
@@ -105,7 +104,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 }
 
 .hero {
-  min-height: calc(100vh - 116px);
+  min-height: calc(100vh - 132px);
   padding: 0;
   border-bottom: 1px solid var(--ink);
   display: grid;
@@ -271,9 +270,9 @@ dialog input, dialog textarea { border-color: var(--ink); border-radius: 0; }
 }
 
 @media (max-width: 680px) {
-  html { scroll-padding-top: 84px; }
-  .site-header { height: 84px; padding: 0 18px; }
-  .header-logo-window { width: 180px; height: 78px; }
+  html { scroll-padding-top: 18px; }
+  .site-header { height: 96px; padding: 0 18px; }
+  .header-logo-window { width: 210px; height: 88px; }
   .nav-toggle { padding: 10px 0; }
   .hero { min-height: auto; }
   .hero-copy { padding: 72px 22px 62px; }
