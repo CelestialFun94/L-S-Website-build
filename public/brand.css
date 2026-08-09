@@ -208,8 +208,16 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .approach-copy .section-label { color: var(--orange); }
 .approach-copy h2 { margin-top: 1.1rem; }
 .approach ol { list-style: none; margin: 4rem 0 0; padding: 0; }
-.approach li { display: grid; grid-template-columns: 55px 1fr; gap: 18px; padding: 1.35rem 0; border: 0; }
-.approach li b { font: 500 11px "DM Mono", monospace; color: var(--orange); }
+.approach li { display: grid; grid-template-columns: 72px 1fr; gap: 20px; padding: 1.55rem 0; border: 0; }
+.concept-number { position: relative; display: grid; place-items: center; width: 62px; height: 58px; isolation: isolate; }
+.concept-number b { position: relative; z-index: 3; display: inline-grid; place-items: center; min-width: 32px; height: 25px; padding: 0 5px; border-radius: 50%; background: rgba(255, 250, 240, .88); font: 500 11px "DM Mono", monospace; color: var(--orange); }
+.concept-sun, .concept-heart { position: absolute; display: block; line-height: 1; pointer-events: none; user-select: none; }
+.concept-sun { z-index: 1; left: -7px; top: -13px; color: var(--sun-soft); font-size: 68px; transform: rotate(-7deg); }
+.concept-heart { z-index: 2; right: 1px; bottom: -1px; color: var(--orange-bg); font: 25px/1 Georgia, serif; transform: rotate(10deg); }
+.approach li:nth-child(2) .concept-sun { left: 2px; top: -8px; color: var(--sun-pastel); font-size: 62px; transform: rotate(9deg); }
+.approach li:nth-child(2) .concept-heart { left: -3px; right: auto; bottom: 0; color: var(--logo-orange); font-size: 22px; transform: rotate(-11deg); }
+.approach li:nth-child(3) .concept-sun { left: -4px; top: -11px; color: #ffd9b8; font-size: 66px; transform: rotate(-12deg); }
+.approach li:nth-child(3) .concept-heart { right: -1px; bottom: 2px; color: var(--sun); font-size: 27px; transform: rotate(7deg); }
 .approach li h3 { font: 700 18px "DM Sans", sans-serif; text-transform: uppercase; letter-spacing: -.02em; margin: 0 0 .4rem; }
 .approach li p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
 
