@@ -40,7 +40,7 @@
             <label>Password<input type="password" name="password" autocomplete="current-password" minlength="8" required /></label>
             <button class="button" type="submit">Enter workspace <span>→</span></button>
           </form>
-          <div class="form-result" id="login-result" role="status" hidden></div>
+          <div class="form-result" id="login-result" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           <p class="admin-security"><span aria-hidden="true">●</span> Secured by Supabase authentication</p>
         </div>
         <p class="admin-copyright">© <span id="year"></span> Love &amp; Sunshine</p>
@@ -51,47 +51,47 @@
       <aside>
         <a class="brand" href="/admindashboard"><span class="sun">✺</span> L&amp;S</a>
         <p class="workspace-label">ADMIN WORKSPACE</p>
-        <nav>
-          <button class="active" data-view="overview">Overview</button>
-          <button data-view="calendar">Calendar</button>
+        <nav aria-label="Workspace navigation">
+          <button type="button" class="active" data-view="overview">Overview</button>
+          <button type="button" data-view="calendar">Calendar</button>
           <span class="nav-section">RELATIONSHIPS</span>
-          <button data-view="artists">Artists &amp; CRM</button>
-          <button data-view="projects">Projects</button>
-          <button data-view="tasks">Tasks</button>
-          <button data-view="activity">Activity</button>
+          <button type="button" data-view="artists">Artists &amp; CRM</button>
+          <button type="button" data-view="projects">Projects</button>
+          <button type="button" data-view="tasks">Tasks</button>
+          <button type="button" data-view="activity">Activity</button>
           <span class="nav-section">MUSIC &amp; MONEY</span>
-          <button data-view="songs">Songs &amp; splits</button>
-          <button data-view="invoices">Billing</button>
-          <button data-view="inquiries">Inquiries</button>
+          <button type="button" data-view="songs">Songs &amp; splits</button>
+          <button type="button" data-view="invoices">Billing</button>
+          <button type="button" data-view="inquiries">Inquiries</button>
           <span class="nav-section">TOOLS</span>
-          <button data-view="files">Files</button>
-          <button data-view="operator">Sunshine Operator</button>
-          <button data-view="vault">Password manager</button>
-          <button data-view="team">Team &amp; access</button>
-          <button data-view="audit">Audit log</button>
+          <button type="button" data-view="files">Files</button>
+          <button type="button" data-view="operator">Sunshine Operator</button>
+          <button type="button" data-view="vault">Password manager</button>
+          <button type="button" data-view="team">Team &amp; access</button>
+          <button type="button" data-view="audit">Audit log</button>
         </nav>
         <div class="aside-bottom">
-          <button data-view="settings">Setup &amp; connections</button>
-          <button id="logout-dashboard">Sign out</button>
-          <button id="exit-dashboard">← Public website</button>
+          <button type="button" data-view="settings">Setup &amp; connections</button>
+          <button type="button" id="logout-dashboard">Sign out</button>
+          <button type="button" id="exit-dashboard">← Public website</button>
         </div>
       </aside>
       <div class="workspace">
         <header class="dash-header">
-          <button class="mobile-menu" aria-label="Menu">☰</button>
+          <button type="button" class="mobile-menu" aria-label="Menu">☰</button>
           <div><p class="eyebrow" id="dashboard-date"></p><h1 id="view-title">Workspace</h1></div>
-          <div class="dash-tools"><label class="workspace-search"><span>Search workspace</span><input id="global-search" type="search" placeholder="Search this view…" /></label><button class="avatar" id="account-avatar" aria-label="Signed-in account">L&amp;S</button></div>
+          <div class="dash-tools"><label class="workspace-search"><span>Search workspace</span><input id="global-search" type="search" placeholder="Search this view…" /></label><button type="button" class="avatar" id="account-avatar" aria-label="Signed-in account">L&amp;S</button></div>
         </header>
         <div id="view-content"><p>Loading workspace…</p></div>
       </div>
     </section>
 
     <dialog id="record-modal" class="record-modal" aria-labelledby="record-modal-title">
-      <button class="close" data-close aria-label="Close">×</button>
+      <button type="button" class="close" data-close aria-label="Close">×</button>
       <p class="eyebrow" id="record-modal-eyebrow">Workspace record</p>
       <h2 id="record-modal-title">Add record</h2>
       <form id="record-form"></form>
-      <div class="form-result" id="record-result" role="status" hidden></div>
+      <div class="form-result" id="record-result" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     </dialog>
 
     <script src="app.js"></script>

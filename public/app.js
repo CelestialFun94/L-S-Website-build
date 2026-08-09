@@ -66,6 +66,7 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
   const submit = $('[type="submit"]', form);
   const data = Object.fromEntries(new FormData(form));
   const kind = form.dataset.form;
+  result.setAttribute('role', 'status');
   result.hidden = true;
   submit.disabled = true;
   submit.textContent = 'Sending…';
@@ -80,12 +81,14 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
       'I’m still finding the fit': 'A short discovery conversation was made for exactly this moment.',
     };
     result.classList.remove('error');
+    result.setAttribute('role', 'status');
     result.innerHTML = kind === 'starter'
       ? `<strong>Thank you, ${escapeHtml(data.name)}.</strong><br>${escapeHtml(guidance[data.path])} Your note is safely in the Love & Sunshine workspace.`
       : `<strong>We received your inquiry, ${escapeHtml(data.name)}.</strong><br>We’ll review it with care and follow up before confirming any session.`;
     form.reset();
   } catch (error) {
     result.classList.add('error');
+    result.setAttribute('role', 'alert');
     result.textContent = error.message;
   } finally {
     result.hidden = false;

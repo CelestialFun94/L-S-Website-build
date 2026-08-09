@@ -5,13 +5,17 @@
   --sun: #ffb300;
   --sun-soft: #ffe564;
   --sun-pastel: #fff0b8;
-  --orange: #d76a2e;
+  --orange: #a64b20;
+  --orange-bg: #db8252;
+  --logo-orange: #df6a2b;
   --line: #313131;
   --muted: #6d675f;
 }
 
 html { scroll-padding-top: 24px; }
 body { background: var(--cream); color: var(--ink); }
+.skip:focus { position: fixed; left: 16px; top: 16px; z-index: 1000; padding: 12px 16px; background: var(--ink); color: white; font-weight: 700; }
+:where(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 3px solid #006f7a; outline-offset: 4px; }
 .dashboard[hidden] { display: none; }
 body:has(.dashboard:not([hidden])) .site-header,
 body:has(.dashboard:not([hidden])) main,
@@ -37,7 +41,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 }
 
 .header-logo-window { position: relative; z-index: 2; display: block; width: 500px; height: 174px; overflow: hidden; }
-.header-logo-window img { position: absolute; left: 50%; top: 48%; width: 86%; height: auto; transform: translate(-50%, -50%); }
+.header-logo-window img { position: absolute; left: 50%; top: 48%; width: 86%; height: auto; transform: translate(-50%, -50%); filter: brightness(.88); }
 .header-sprinkles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .header-sprinkles span { position: absolute; display: block; line-height: 1; opacity: .72; user-select: none; }
 .header-sun { color: var(--sun-soft); }.header-heart { color: var(--orange); font-family: Georgia, serif; }
@@ -143,7 +147,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 
 .hero h1 em {
   display: block;
-  color: var(--orange);
+  color: var(--logo-orange);
   font: 500 .48em / 1.05 Lora, serif;
   text-transform: none;
   letter-spacing: -.045em;
@@ -188,14 +192,14 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; border: 0; }
 .service-card { min-height: 610px; padding: clamp(26px, 3vw, 48px); border: 0; display: flex; flex-direction: column; color: var(--ink); }
 .service-card-yellow { background: var(--sun-soft); }
-.service-card-orange { background: var(--orange); }
+.service-card-orange { background: var(--orange-bg); }
 .service-card-cream { background: var(--cream); }
 .service-top { display: flex; justify-content: space-between; font: 500 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .12em; }
 .service-card h3 { font: 700 clamp(38px, 3.5vw, 60px) / .92 "DM Sans", sans-serif; letter-spacing: -.06em; text-transform: uppercase; margin: clamp(80px, 9vw, 140px) 0 1.5rem; }
 .service-card p { font-size: 16px; line-height: 1.6; margin: 0; max-width: 450px; }
 .service-card ul { list-style: none; display: grid; gap: .7rem; margin: 2rem 0; padding: 0; border: 0; }
 .service-card li { border: 0; font: 500 12px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .06em; }
-.service-card button { margin-top: auto; align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; font: 700 12px "DM Sans", sans-serif; text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+.service-card button { min-width: 44px; min-height: 44px; margin-top: auto; align-self: flex-start; padding: 10px 2px; border: 0; background: none; color: inherit; font: 700 12px "DM Sans", sans-serif; text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
 
 .approach { display: grid; grid-template-columns: 1fr 1fr; background: var(--cream); color: var(--ink); }
 .approach-mark { min-height: 720px; background: var(--sun-pastel); overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 8%; }
@@ -209,12 +213,17 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .approach li h3 { font: 700 18px "DM Sans", sans-serif; text-transform: uppercase; letter-spacing: -.02em; margin: 0 0 .4rem; }
 .approach li p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
 
-.contact { padding: clamp(80px, 10vw, 155px) clamp(24px, 7vw, 112px); background: var(--orange); display: grid; grid-template-columns: 1.25fr .75fr; gap: 8vw; align-items: end; border: 0; }
+.contact { padding: clamp(80px, 10vw, 155px) clamp(24px, 7vw, 112px); background: var(--orange-bg); display: grid; grid-template-columns: 1.25fr .75fr; gap: 8vw; align-items: end; border: 0; }
 .contact .section-label { color: var(--ink); margin-bottom: 1.2rem; }
 .contact-copy > p { max-width: 520px; margin: 0; font-size: 18px; line-height: 1.6; }
 .contact-actions { display: flex; align-items: center; gap: 1.3rem; margin-top: 2rem; }
 .button-light { background: var(--cream); color: var(--ink); }
 .text-button { border: 0; padding: 0; background: none; font: 700 11px "DM Sans", sans-serif; text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+
+.accessibility-help { padding: 56px clamp(24px, 7vw, 112px); background: var(--paper); display: grid; grid-template-columns: minmax(220px, .65fr) minmax(300px, 1.35fr); gap: 6vw; align-items: start; }
+.accessibility-help h2 { margin: 0; font: 500 clamp(30px, 3.3vw, 48px) / 1.05 Lora, serif; letter-spacing: -.04em; }
+.accessibility-help p { max-width: 720px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.65; }
+.accessibility-help a { color: var(--ink); font-weight: 700; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 footer { padding: 55px clamp(24px, 4vw, 64px) 24px; background: var(--cream); color: var(--ink); display: grid; grid-template-columns: 1.2fr 1fr .6fr; gap: 45px; align-items: start; }
 .footer-brand { display: flex; align-items: center; gap: 14px; }
@@ -222,7 +231,7 @@ footer { padding: 55px clamp(24px, 4vw, 64px) 24px; background: var(--cream); co
 .footer-brand p { font: 700 20px "DM Sans", sans-serif; color: var(--ink); }
 footer > p { line-height: 1.6; color: var(--muted); }
 footer nav { display: grid; gap: .65rem; }
-footer nav a, .admin-link { color: var(--ink); text-decoration: none; font: 600 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .07em; }
+footer nav a, .admin-link { min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); text-decoration: none; font: 600 11px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .07em; }
 .admin-link { color: var(--sun); width: max-content; }
 footer small { grid-column: 1 / -1; margin-top: 32px; padding-top: 18px; border: 0; color: var(--muted); }
 
@@ -230,6 +239,13 @@ dialog { border: 1px solid var(--ink); border-radius: 0; background: var(--cream
 dialog h2 { font-family: Lora, serif; }
 dialog input:not([type="radio"]):not([type="checkbox"]), dialog textarea, dialog select { width: 100%; border: 1px solid var(--ink); border-radius: 0; background: white; padding: .7rem; font: 15px "DM Sans", sans-serif; }
 dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
+.form-instructions { margin: -.6rem 0 .25rem; color: var(--muted); font-size: 13px; }
+.close { min-width: 44px; min-height: 44px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
 
 @media (max-width: 1020px) {
   .site-header > .button { display: none; }
@@ -244,6 +260,7 @@ dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
   .approach-mark { min-height: 540px; }
   .approach-mark img { max-height: 470px; }
   .contact { grid-template-columns: 1fr; gap: 45px; }
+  .accessibility-help { grid-template-columns: 1fr; gap: 24px; }
 }
 
 @media (max-width: 680px) {
@@ -276,6 +293,7 @@ dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
   .contact { padding: 76px 22px; }
   .contact-copy > p { font-size: 16px; }
   .contact-actions { align-items: flex-start; flex-direction: column; }
+  .accessibility-help { padding: 48px 22px; }
   footer { grid-template-columns: 1fr; gap: 26px; padding: 45px 22px 22px; }
   footer small { grid-column: 1; margin-top: 10px; }
   dialog { padding: 2rem 1.25rem; box-shadow: 8px 8px 0 var(--sun); }
