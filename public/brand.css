@@ -142,7 +142,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .hero h1 em {
   display: block;
   color: var(--orange);
-  font: 500 .48em / 1.05 Fraunces, serif;
+  font: 500 .48em / 1.05 Lora, serif;
   text-transform: none;
   letter-spacing: -.045em;
   margin-top: .28em;
@@ -203,7 +203,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 
 .statement h2, .section-heading h2, .approach h2, .contact h2 {
   margin: 0;
-  font: 500 clamp(42px, 5.5vw, 82px) / .99 Fraunces, serif;
+  font: 500 clamp(42px, 5.5vw, 82px) / .99 Lora, serif;
   letter-spacing: -.055em;
 }
 
@@ -255,7 +255,7 @@ footer nav a, .admin-link { color: var(--ink); text-decoration: none; font: 600 
 footer small { grid-column: 1 / -1; margin-top: 32px; border-top: 1px solid rgba(49, 49, 49, .32); padding-top: 18px; color: var(--muted); }
 
 dialog { border: 1px solid var(--ink); border-radius: 0; background: var(--cream); box-shadow: 16px 16px 0 var(--sun); }
-dialog h2 { font-family: Fraunces, serif; }
+dialog h2 { font-family: Lora, serif; }
 dialog input, dialog textarea { border-color: var(--ink); border-radius: 0; }
 
 @media (max-width: 1020px) {

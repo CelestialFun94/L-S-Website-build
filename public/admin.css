@@ -8,17 +8,17 @@ body[data-admin-page="true"]{min-height:100vh;background:var(--ink)}
 .admin-home-link:hover{color:var(--sun)}
 .admin-brand{display:flex;align-items:center;gap:.8rem;position:absolute;left:clamp(2rem,6vw,6.5rem);top:50%;transform:translateY(-205px)}
 .admin-brand img{width:45px;height:45px;object-fit:cover;border-radius:50%;mix-blend-mode:screen}
-.admin-brand p{margin:0;font:600 18px Fraunces,serif;color:var(--cream)}
+.admin-brand p{margin:0;font:600 18px Lora,serif;color:var(--cream)}
 .admin-welcome-copy{max-width:680px;margin:auto 0}
 .admin-welcome-copy .eyebrow{color:var(--sun);margin-bottom:1.2rem}
-.admin-welcome h1{font:500 clamp(48px,5.3vw,83px)/.94 Fraunces,serif;letter-spacing:-.06em;margin:0}
+.admin-welcome h1{font:500 clamp(48px,5.3vw,83px)/.94 Lora,serif;letter-spacing:-.06em;margin:0}
 .admin-welcome h1 em{color:var(--coral);font-style:italic}
 .admin-welcome-copy>p:last-child{max-width:500px;color:#c9c7cd;font-size:17px;line-height:1.6;margin:2rem 0 0}
 .admin-marks{display:flex;align-items:center;gap:1.1rem;color:var(--pink);font-size:25px}
 .admin-marks span:nth-child(2){color:var(--sun);font-size:35px}
 .admin-login{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:3rem clamp(1.5rem,5vw,5rem);position:relative}
 .admin-login-card{width:min(100%,440px)}
-.admin-login-card h2{font:500 clamp(42px,4.3vw,64px)/1 Fraunces,serif;letter-spacing:-.055em;margin:.8rem 0 1.2rem}
+.admin-login-card h2{font:500 clamp(42px,4.3vw,64px)/1 Lora,serif;letter-spacing:-.055em;margin:.8rem 0 1.2rem}
 .admin-login-intro{color:var(--muted);line-height:1.55;margin:0 0 2rem}
 .admin-login form{gap:1.2rem}
 .admin-login input{padding:.9rem 1rem;border-color:var(--line);border-radius:0}
@@ -73,7 +73,7 @@ body[data-admin-page="true"] .dashboard aside nav{gap:.15rem}
 .operator-hero .button{background:var(--sun);color:var(--ink);position:relative;z-index:1}
 .integration-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
 .integration-card{display:grid;grid-template-columns:42px 1fr;gap:1rem;position:relative;background:#fff;border:1px solid #e4e0da;padding:1.3rem;min-height:170px}
-.integration-card .integration-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#fff0d0;color:var(--coral);font:600 19px Fraunces,serif}
+.integration-card .integration-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#fff0d0;color:var(--coral);font:600 19px Lora,serif}
 .integration-card h2{font-size:20px;margin:.35rem 0}
 .integration-card p:not(.eyebrow){color:var(--muted);font-size:12px;line-height:1.45}
 .integration-card small{display:block;margin-top:.7rem;color:var(--muted)}
@@ -86,7 +86,7 @@ body[data-admin-page="true"] .dashboard aside nav{gap:.15rem}
 .decision-panel h2{font-size:25px;margin:0 0 .6rem}.decision-panel p{max-width:850px;color:var(--muted);line-height:1.55}
 .month-calendar{background:#fff;border:1px solid #e2ddd4;margin-bottom:1rem;box-shadow:0 14px 36px #3b342c0a}
 .calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.35rem 1.45rem;border-bottom:1px solid #e8e3da}
-.calendar-toolbar h2{font:600 32px/1.05 Fraunces,serif;letter-spacing:-.035em;margin:.35rem 0 .55rem}
+.calendar-toolbar h2{font:600 32px/1.05 Lora,serif;letter-spacing:-.035em;margin:.35rem 0 .55rem}
 .calendar-sources{display:flex;align-items:center;flex-wrap:wrap;gap:.9rem;color:var(--muted);font-size:11px}
 .calendar-sources span{display:flex;align-items:center;gap:.38rem}.calendar-sources i{display:block;width:8px;height:8px;border-radius:50%;background:var(--coral)}
 .calendar-sources .workspace-dot{background:var(--sun)}.calendar-account i{background:var(--green)}
