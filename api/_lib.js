@@ -46,7 +46,8 @@ async function supabase(path, options = {}) {
 
 async function adminSupabase(path, options = {}) {
   const { url, key } = secretEnv();
-  const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...options.headers };
+  const headers = { apikey: key, 'Content-Type': 'application/json', ...options.headers };
+  if (!key.startsWith('sb_secret_') && !headers.Authorization) headers.Authorization = `Bearer ${key}`;
   return fetch(`${url}${path}`, { ...options, headers });
 }
 

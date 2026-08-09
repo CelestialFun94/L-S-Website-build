@@ -15,7 +15,7 @@ The Supabase publishable key is intentionally safe for public clients, but this 
 1. Create each team member in **Supabase → Authentication → Users** using an owner-approved business email.
 2. Add the new user's UUID to `public.profiles` with an appropriate role: `owner`, `admin`, `operations`, `finance`, or `read_only`.
 3. Keep `active = true` only while the person should have workspace access.
-4. Team members sign in through **Team sign in** on the public site. The API stores access and refresh tokens in secure, HTTP-only cookies.
+4. Team members sign in at `https://loveandsunshinenash.com/admindashboard`. The API stores access and refresh tokens in secure, HTTP-only cookies.
 
 An Auth user without a matching active profile cannot enter the workspace.
 
@@ -30,6 +30,8 @@ Create each account in the business owner’s name, with a Love & Sunshine-owned
 | Google Cloud | Google Calendar availability OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Microsoft Entra | Microsoft 365 / Outlook availability OAuth | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
 | Private object storage | Artist and project files | Provider-specific private bucket credentials |
+| OpenAI | Controlled Sunshine Operator tools after permissions and budget approval | `OPENAI_API_KEY` and server-only model configuration |
+| External password manager | Secure credential storage; the dashboard stores references only | No password-manager secrets are stored in this application |
 
 Confirm the legal business name, domain, public email, invoice terms, internal roles, and privacy/terms language before enabling payments, email, calendar booking, or private client files.
 

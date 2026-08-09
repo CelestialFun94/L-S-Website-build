@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#20233a" />
+    <title>Admin Dashboard — Love &amp; Sunshine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body data-admin-page="true">
+    <a class="skip" href="#login-form">Skip to sign in</a>
+
+    <main class="admin-gateway" id="admin">
+      <section class="admin-welcome" aria-labelledby="admin-title">
+        <a class="admin-home-link" href="/">← Public website</a>
+        <div class="admin-brand">
+          <img src="images/brand/sun-heart-mark.jpg" alt="" />
+          <p>Love &amp; Sunshine</p>
+        </div>
+        <div class="admin-welcome-copy">
+          <p class="eyebrow">Private workspace</p>
+          <h1 id="admin-title">The business side,<br /><em>kept in rhythm.</em></h1>
+          <p>Manage artists, projects, songs, inquiries, invoicing, payment plans, and retainers in one protected workspace.</p>
+        </div>
+        <div class="admin-marks" aria-hidden="true"><span>♥</span><span>✺</span><span>♥</span></div>
+      </section>
+
+      <section class="admin-login" aria-labelledby="login-title">
+        <div class="admin-login-card">
+          <p class="eyebrow">Authorized access</p>
+          <h2 id="login-title">Welcome back.</h2>
+          <p class="admin-login-intro">Sign in with the account assigned to you by the Love &amp; Sunshine owner.</p>
+          <form id="login-form">
+            <label>Email address<input type="email" name="email" autocomplete="username" required /></label>
+            <label>Password<input type="password" name="password" autocomplete="current-password" minlength="8" required /></label>
+            <button class="button" type="submit">Enter workspace <span>→</span></button>
+          </form>
+          <div class="form-result" id="login-result" role="status" hidden></div>
+          <p class="admin-security"><span aria-hidden="true">●</span> Secured by Supabase authentication</p>
+        </div>
+        <p class="admin-copyright">© <span id="year"></span> Love &amp; Sunshine</p>
+      </section>
+    </main>
+
+    <section class="dashboard" id="dashboard" hidden aria-label="Love and Sunshine admin workspace">
+      <aside>
+        <a class="brand" href="/admindashboard"><span class="sun">✺</span> L&amp;S</a>
+        <p class="workspace-label">ADMIN WORKSPACE</p>
+        <nav>
+          <button class="active" data-view="overview">Overview</button>
+          <span class="nav-section">RELATIONSHIPS</span>
+          <button data-view="artists">Artists &amp; CRM</button>
+          <button data-view="projects">Projects</button>
+          <button data-view="tasks">Tasks</button>
+          <button data-view="activity">Activity</button>
+          <span class="nav-section">MUSIC &amp; MONEY</span>
+          <button data-view="songs">Songs &amp; splits</button>
+          <button data-view="invoices">Billing</button>
+          <button data-view="inquiries">Inquiries</button>
+          <span class="nav-section">TOOLS</span>
+          <button data-view="calendar">Calendar</button>
+          <button data-view="files">Files</button>
+          <button data-view="operator">Sunshine Operator</button>
+          <button data-view="vault">Password manager</button>
+          <button data-view="team">Team &amp; access</button>
+          <button data-view="audit">Audit log</button>
+        </nav>
+        <div class="aside-bottom">
+          <button data-view="settings">Setup &amp; connections</button>
+          <button id="logout-dashboard">Sign out</button>
+          <button id="exit-dashboard">← Public website</button>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="dash-header">
+          <button class="mobile-menu" aria-label="Menu">☰</button>
+          <div><p class="eyebrow" id="dashboard-date"></p><h1 id="view-title">Workspace</h1></div>
+          <div class="dash-tools"><label class="workspace-search"><span>Search workspace</span><input id="global-search" type="search" placeholder="Search this view…" /></label><button class="avatar" id="account-avatar" aria-label="Signed-in account">L&amp;S</button></div>
+        </header>
+        <div id="view-content"><p>Loading workspace…</p></div>
+      </div>
+    </section>
+
+    <dialog id="record-modal" class="record-modal" aria-labelledby="record-modal-title">
+      <button class="close" data-close aria-label="Close">×</button>
+      <p class="eyebrow" id="record-modal-eyebrow">Workspace record</p>
+      <h2 id="record-modal-title">Add record</h2>
+      <form id="record-form"></form>
+      <div class="form-result" id="record-result" role="status" hidden></div>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
