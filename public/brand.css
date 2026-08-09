@@ -19,7 +19,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 4;
+  z-index: 10;
   height: 80px;
   padding: 0 clamp(22px, 4vw, 64px);
   background: rgba(255, 250, 240, .96);
@@ -41,24 +41,49 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 }
 
 .brand-lockup img { width: 34px; height: 27px; object-fit: cover; object-position: center; }
-.site-header nav { display: flex; gap: clamp(22px, 3vw, 46px); }
+.site-header nav {
+  display: none;
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  width: min(360px, 100vw);
+  padding: 18px clamp(22px, 4vw, 64px) 24px;
+  background: var(--cream);
+  border-right: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  box-shadow: 10px 12px 0 rgba(255, 229, 100, .7);
+}
+.site-header.menu-open nav { display: grid; }
 .site-header nav a {
   color: inherit;
   text-decoration: none;
   font: 600 12px "DM Mono", monospace;
   text-transform: uppercase;
   letter-spacing: .08em;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(49, 49, 49, .3);
 }
-.site-header .button-small { justify-self: end; }
+.site-header nav a:last-child { border-bottom: 0; }
+.site-header .button-small { grid-column: 3; grid-row: 1; justify-self: end; }
+.brand-lockup { grid-column: 2; grid-row: 1; justify-self: center; }
 .nav-toggle {
-  display: none;
-  justify-self: end;
+  display: inline-flex;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 0;
   border: 0;
   background: none;
   color: inherit;
   font: 600 12px "DM Mono", monospace;
   text-transform: uppercase;
+  letter-spacing: .08em;
+  cursor: pointer;
 }
+.nav-toggle::before { content: ""; width: 19px; height: 10px; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
+.site-header.menu-open .nav-toggle::before { height: 1px; border-bottom: 0; transform: rotate(45deg); }
 
 .button {
   min-height: 48px;
@@ -234,13 +259,7 @@ dialog h2 { font-family: Fraunces, serif; }
 dialog input, dialog textarea { border-color: var(--ink); border-radius: 0; }
 
 @media (max-width: 1020px) {
-  .site-header { grid-template-columns: 1fr auto; }
-  .site-header > nav, .site-header > .button { display: none; }
-  .nav-toggle { display: block; }
-  .site-header.menu-open { height: auto; min-height: 80px; grid-template-rows: 80px auto auto; padding-bottom: 22px; }
-  .site-header.menu-open nav { display: grid; grid-column: 1 / -1; gap: 0; border-top: 1px solid var(--ink); }
-  .site-header.menu-open nav a { padding: 14px 0; border-bottom: 1px solid var(--ink); }
-  .site-header.menu-open > .button { display: inline-flex; grid-column: 1 / -1; justify-self: stretch; margin-top: 16px; }
+  .site-header > .button { display: none; }
   .hero { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .hero-copy { padding: 90px 7vw; }
   .hero-identity { min-height: 570px; border-left: 0; border-top: 1px solid var(--ink); }

@@ -16,17 +16,27 @@ $('#dashboard-date').textContent = new Intl.DateTimeFormat('en-US', { weekday: '
 
 const navigationToggle = $('.nav-toggle');
 if (navigationToggle) {
+  const closeNavigation = () => {
+    navigationToggle.closest('.site-header').classList.remove('menu-open');
+    navigationToggle.setAttribute('aria-expanded', 'false');
+    navigationToggle.setAttribute('aria-label', 'Open navigation');
+    navigationToggle.textContent = 'Menu';
+  };
   navigationToggle.addEventListener('click', () => {
     const header = navigationToggle.closest('.site-header');
     const open = header.classList.toggle('menu-open');
     navigationToggle.setAttribute('aria-expanded', String(open));
+    navigationToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
     navigationToggle.textContent = open ? 'Close' : 'Menu';
   });
-  $$('.site-header nav a').forEach(link => link.addEventListener('click', () => {
-    navigationToggle.closest('.site-header').classList.remove('menu-open');
-    navigationToggle.setAttribute('aria-expanded', 'false');
-    navigationToggle.textContent = 'Menu';
-  }));
+  $$('.site-header nav a').forEach(link => link.addEventListener('click', closeNavigation));
+  document.addEventListener('click', event => {
+    const header = navigationToggle.closest('.site-header');
+    if (header.classList.contains('menu-open') && !header.contains(event.target)) closeNavigation();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeNavigation();
+  });
 }
 
 $$('[data-open]').forEach(button => button.addEventListener('click', () => openModal($('#' + button.dataset.open))));
