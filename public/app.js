@@ -14,6 +14,21 @@ const closeModal = dialog => {
 $('#year').textContent = new Date().getFullYear();
 $('#dashboard-date').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
 
+const navigationToggle = $('.nav-toggle');
+if (navigationToggle) {
+  navigationToggle.addEventListener('click', () => {
+    const header = navigationToggle.closest('.site-header');
+    const open = header.classList.toggle('menu-open');
+    navigationToggle.setAttribute('aria-expanded', String(open));
+    navigationToggle.textContent = open ? 'Close' : 'Menu';
+  });
+  $$('.site-header nav a').forEach(link => link.addEventListener('click', () => {
+    navigationToggle.closest('.site-header').classList.remove('menu-open');
+    navigationToggle.setAttribute('aria-expanded', 'false');
+    navigationToggle.textContent = 'Menu';
+  }));
+}
+
 $$('[data-open]').forEach(button => button.addEventListener('click', () => openModal($('#' + button.dataset.open))));
 $$('[data-close]').forEach(button => button.addEventListener('click', () => closeModal(button.closest('dialog'))));
 $$('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) closeModal(dialog); }));
@@ -44,10 +59,10 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
       body: JSON.stringify({ ...data, kind, consent: data.consent === 'on' }),
     });
     const guidance = {
-      'I have songs but no plan': 'An Artist Direction Session is a strong place to start.',
+      'I’m looking for management': 'A focused management conversation is a strong place to start.',
+      'I need publishing support': 'A catalog and publishing conversation is a strong next move.',
       'I want to write with someone': 'A co-writing conversation is a strong next move.',
-      'I’m ready to release something': 'A Release Mapping Session can give the project a clear runway.',
-      'I’m not sure yet': 'An Artist Direction Session was made for exactly this moment.',
+      'I’m still finding the fit': 'A short discovery conversation was made for exactly this moment.',
     };
     result.classList.remove('error');
     result.innerHTML = kind === 'starter'
