@@ -33,5 +33,6 @@ Create Love & Sunshine-owned accounts directly with each provider before enablin
 - Authentication tokens are stored in secure, HTTP-only cookies and never exposed to browser JavaScript.
 - Stripe Billing supports one-time hosted invoices, finite installment plans, recurring retainers, customer records, payment history, and signature-verified webhook synchronization. Billing changes are limited to owner, admin, and finance roles.
 - The production admin workspace is available at `https://loveandsunshinenash.com/admindashboard` and is excluded from search indexing.
+- Outlook Calendar uses delegated Microsoft Graph authorization and supports GoDaddy-hosted Microsoft 365 work accounts. OAuth tokens are encrypted before storage and never exposed to the browser.
 
 See `docs/INTEGRATION_SETUP.md` for the intended credentials and safeguards.

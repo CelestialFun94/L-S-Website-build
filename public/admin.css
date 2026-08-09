@@ -79,8 +79,17 @@ body[data-admin-page="true"] .dashboard aside nav{gap:.15rem}
 .integration-card small{display:block;margin-top:.7rem;color:var(--muted)}
 .integration-card .connection-state{position:absolute;right:1rem;top:1rem}
 .connection-state.attention-state{background:#fff0d5;color:#a56420}
+.integration-action{display:inline-block;margin-top:.8rem;border:0;border-radius:20px;background:var(--ink);color:#fff;padding:.55rem .8rem;text-decoration:none;font:600 11px "DM Sans";cursor:pointer}
+.integration-action.secondary{background:#eee9df;color:var(--ink)}
+.setup-needed{display:block;margin-top:.8rem;color:#9a622b;font:500 10px "DM Mono";text-transform:uppercase;letter-spacing:.04em}
 .decision-panel{margin-top:1rem;background:#fff;border:1px solid #e4e0da;padding:1.6rem}
 .decision-panel h2{font-size:25px;margin:0 0 .6rem}.decision-panel p{max-width:850px;color:var(--muted);line-height:1.55}
+.calendar-connection{display:flex;align-items:center;justify-content:space-between;gap:2rem;background:var(--ink);color:var(--cream);padding:2rem;margin-bottom:1rem;border-left:5px solid var(--sun)}
+.calendar-connection.is-connected{border-left-color:var(--green)}
+.calendar-connection>div{max-width:760px}.calendar-connection .eyebrow{color:var(--sun)}
+.calendar-connection h2{font-size:32px;margin:.55rem 0}.calendar-connection p:not(.eyebrow){color:#cccad1;line-height:1.55;margin-bottom:0}
+.calendar-setup-note{max-width:250px;color:var(--sun);font:500 11px/1.5 "DM Mono";text-transform:uppercase}
+.calendar-notice{margin:0 0 1rem}
 
 @media(max-width:1200px){.metrics.six{grid-template-columns:repeat(3,1fr)}.integration-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){
@@ -90,5 +99,6 @@ body[data-admin-page="true"] .dashboard aside nav{gap:.15rem}
   .dash-header{gap:1rem}.dash-tools{margin-left:auto}.workspace-search input{width:180px}
   .metrics.six{grid-template-columns:repeat(2,1fr)}.integration-grid{grid-template-columns:1fr}
   .operator-hero{align-items:start;flex-direction:column}.record-grid{grid-template-columns:1fr}.record-wide{grid-column:auto}
+  .calendar-connection{align-items:flex-start;flex-direction:column}
 }
 @media(max-width:520px){.workspace-search{display:none}.metrics.six{grid-template-columns:1fr}.quick-actions{overflow-x:auto;flex-wrap:nowrap}.dashboard-grid{grid-template-columns:1fr}.operator-hero h2{font-size:34px}}

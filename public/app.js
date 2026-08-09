@@ -225,10 +225,11 @@ async function recordDefinition(resource) {
     ] };
   }
   if (resource === 'bookings') {
-    const [projects, artists] = await Promise.all(['projects', 'artists'].map(load));
+    const [projects, artists, microsoft] = await Promise.all([load('projects'), load('artists'), request('/api/microsoft-calendar?action=status').catch(() => ({ connected: false }))]);
     return { title: 'Add a booking', fields: [
       { name: 'title', label: 'Event title', required: true, wide: true }, { name: 'starts_at', label: 'Starts', type: 'datetime-local', required: true },
       { name: 'ends_at', label: 'Ends', type: 'datetime-local', required: true }, { name: 'location', label: 'Location or link' },
+      { name: 'provider', label: 'Calendar', type: 'select', options: [{ value: 'manual', label: 'Workspace only' }, ...(microsoft.connected ? [{ value: 'microsoft', label: 'Outlook Calendar' }] : [])] },
       { name: 'artist_id', label: 'Artist', type: 'select', options: optionList(artists) }, { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) },
       { name: 'status', label: 'Status', type: 'select', options: status(['tentative', 'confirmed', 'completed', 'canceled']) }, { name: 'notes', label: 'Notes', type: 'textarea' },
     ] };
@@ -280,7 +281,11 @@ $('#record-form')?.addEventListener('submit', async event => {
   submit.textContent = 'Saving…';
   result.hidden = true;
   try {
-    await request(`/api/dashboard?resource=${encodeURIComponent(form.dataset.resource)}`, { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+    const values = Object.fromEntries(new FormData(form));
+    const url = form.dataset.resource === 'bookings' && values.provider === 'microsoft'
+      ? '/api/microsoft-calendar?action=create_event'
+      : `/api/dashboard?resource=${encodeURIComponent(form.dataset.resource)}`;
+    await request(url, { method: 'POST', body: JSON.stringify(values) });
     closeModal($('#record-modal'));
     await render(currentView);
   } catch (error) {
@@ -348,8 +353,24 @@ async function billing() {
 }
 
 async function settings() {
-  const [items, stripeStatus] = await Promise.all([load('integration_connections'), request('/api/billing').catch(() => ({ connected: false, mode: null }))]);
-  return `<p class="integration-note"><strong>Safe setup center.</strong> Account labels and connection health may appear here, but secret keys and OAuth tokens are never returned to the browser. Stripe is reporting ${stripeStatus.connected ? `${escapeHtml(stripeStatus.mode)} mode` : 'not configured'}.</p><div class="integration-grid">${items.map(item => `<article class="integration-card" data-search-row><div class="integration-icon">${escapeHtml(item.display_name.slice(0, 1))}</div><div><p class="eyebrow">${escapeHtml(friendly(item.provider))}</p><h2>${escapeHtml(item.display_name)}</h2><p>${escapeHtml(item.notes || 'Integration status')}</p>${item.account_label ? `<small>${escapeHtml(item.account_label)}</small>` : ''}</div><span class="connection-state ${item.status === 'connected' ? 'connected' : item.status === 'needs_attention' ? 'attention-state' : ''}">${escapeHtml(friendly(item.status))}</span></article>`).join('')}</div><section class="decision-panel"><h2>Decisions still required</h2><p>Before connecting the remaining providers, confirm the email sender, required Google and Microsoft calendars, R2 bucket, AI operator name and limits, password-manager choice, and whether Chase means merchant processing or bank reconciliation.</p></section>`;
+  const [items, stripeStatus, microsoft] = await Promise.all([
+    load('integration_connections'), request('/api/billing').catch(() => ({ connected: false, mode: null })),
+    request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' })),
+  ]);
+  const cards = items.map(item => {
+    const isMicrosoft = item.provider === 'microsoft_calendar';
+    const status = isMicrosoft ? microsoft.status : item.status;
+    const account = isMicrosoft ? microsoft.accountLabel : item.account_label;
+    const action = isMicrosoft
+      ? microsoft.connected
+        ? '<button class="integration-action secondary" data-microsoft-disconnect>Disconnect</button>'
+        : microsoft.configured
+          ? '<a class="integration-action" href="/api/microsoft-calendar?action=connect">Connect Outlook</a>'
+          : '<span class="setup-needed">Microsoft app registration needed</span>'
+      : '';
+    return `<article class="integration-card" data-search-row><div class="integration-icon">${escapeHtml(item.display_name.slice(0, 1))}</div><div><p class="eyebrow">${escapeHtml(friendly(item.provider))}</p><h2>${escapeHtml(item.display_name)}</h2><p>${escapeHtml(isMicrosoft && microsoft.calendarName ? `Primary calendar: ${microsoft.calendarName}` : item.notes || 'Integration status')}</p>${account ? `<small>${escapeHtml(account)}</small>` : ''}${action}</div><span class="connection-state ${status === 'connected' ? 'connected' : status === 'needs_attention' ? 'attention-state' : ''}">${escapeHtml(friendly(status))}</span></article>`;
+  }).join('');
+  return `<p class="integration-note"><strong>Safe setup center.</strong> Account labels and connection health may appear here, but secret keys and OAuth tokens are never returned to the browser. Stripe is reporting ${stripeStatus.connected ? `${escapeHtml(stripeStatus.mode)} mode` : 'not configured'}.</p><div class="integration-grid">${cards}</div><section class="decision-panel"><h2>Decisions still required</h2><p>Before connecting the remaining providers, confirm the email sender, required Google calendars, R2 bucket, AI operator name and limits, password-manager choice, and whether Chase means merchant processing or bank reconciliation.</p></section>`;
 }
 
 const pages = {
@@ -386,10 +407,29 @@ const pages = {
     const items = await load('inquiries');
     return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || item.idea || 'No additional note.')}</p></div><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
   },
-  calendar: async () => table('Bookings & sessions', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], (await load('bookings')).map(item => [
-    escapeHtml(item.title), escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), escapeHtml(friendly(item.provider)),
-    statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'),
-  ]), addButton('bookings', 'Add booking')),
+  calendar: async () => {
+    const [bookings, microsoft] = await Promise.all([load('bookings'), request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' }))]);
+    let outlookEvents = [];
+    let outlookError = null;
+    if (microsoft.connected) {
+      try { outlookEvents = (await request('/api/microsoft-calendar?action=events')).data || []; }
+      catch (error) { outlookError = error.message; }
+    }
+    const message = new URLSearchParams(location.search).get('calendar');
+    const connectionAction = microsoft.connected
+      ? '<button class="button button-small button-light" data-microsoft-disconnect>Disconnect Outlook</button>'
+      : microsoft.configured
+        ? '<a class="button button-small button-light" href="/api/microsoft-calendar?action=connect">Connect Outlook Calendar</a>'
+        : '<span class="calendar-setup-note">Microsoft application credentials are required before sign-in.</span>';
+    return `${message === 'microsoft-connected' ? '<div class="form-result calendar-notice"><strong>Outlook Calendar connected.</strong> Upcoming events are now available in this workspace.</div>' : ''}
+      <section class="calendar-connection ${microsoft.connected ? 'is-connected' : ''}"><div><p class="eyebrow">Microsoft 365 through GoDaddy</p><h2>${microsoft.connected ? escapeHtml(microsoft.calendarName || 'Outlook Calendar') : 'Connect Outlook Calendar'}</h2><p>${microsoft.connected ? `Connected as ${escapeHtml(microsoft.accountLabel || 'Microsoft 365 user')}. Events are read through Microsoft Graph and new Outlook bookings can be created from this dashboard.` : 'Authorize the Microsoft 365 account attached to your GoDaddy email. Your GoDaddy password is never stored by Love & Sunshine.'}</p>${outlookError ? `<div class="form-result error">${escapeHtml(outlookError)}</div>` : ''}</div>${connectionAction}</section>
+      <div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
+        escapeHtml(item.title), escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), escapeHtml(friendly(item.provider)),
+        statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'),
+      ]), addButton('bookings', 'Add booking'))}${microsoft.connected ? table('Upcoming Outlook events', ['Event', 'Starts', 'Ends', 'Availability', 'Location', 'Open'], outlookEvents.map(item => [
+        escapeHtml(item.title), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), tag(item.show_as || 'busy'), escapeHtml(item.location || '—'), item.web_url ? `<a href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener">Open in Outlook ↗</a>` : '—',
+      ])) : ''}</div>`;
+  },
   files: async () => `<p class="integration-note"><strong>File catalog enabled.</strong> Approved public brand assets remain in the GitHub repository. Connect Cloudflare R2 before uploading private artist files; until then this section stores metadata and references only.</p>${table('File records', ['Name', 'Artist / project', 'Provider', 'Type', 'Status', 'Added'], (await load('file_records')).map(item => [
     `<strong>${escapeHtml(item.name)}</strong>${item.object_key ? `<small>${escapeHtml(item.object_key)}</small>` : ''}`, escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(friendly(item.storage_provider)), escapeHtml(item.mime_type || '—'), tag(item.status), escapeHtml(date(item.created_at)),
   ]), addButton('file_records', 'Add file reference'))}`,
@@ -467,6 +507,15 @@ async function render(view = 'overview') {
     $('#view-content').innerHTML = await pages[view]();
     bindBillingForm();
     $$('[data-create]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.create).catch(error => alert(error.message))));
+    $$('[data-microsoft-disconnect]').forEach(button => button.addEventListener('click', async () => {
+      if (!confirm('Disconnect Outlook Calendar from this workspace? Existing Outlook events will not be deleted.')) return;
+      button.disabled = true;
+      try {
+        await request('/api/microsoft-calendar?action=disconnect', { method: 'DELETE' });
+        await render(currentView);
+      } catch (error) { alert(error.message); }
+      finally { button.disabled = false; }
+    }));
     $$('[data-update-resource]').forEach(select => select.addEventListener('change', async () => {
       const previous = [...select.options].find(option => option.defaultSelected)?.value || select.value;
       select.disabled = true;

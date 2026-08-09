@@ -28,12 +28,19 @@ Create each account in the business owner’s name, with a Love & Sunshine-owned
 | Stripe | Hosted invoices, finite payment plans, recurring retainers, portal links, and signed event synchronization | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | Resend | Transactional acknowledgement and billing email | `RESEND_API_KEY`, `EMAIL_FROM` |
 | Google Cloud | Google Calendar availability OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
-| Microsoft Entra | Microsoft 365 / Outlook availability OAuth | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
+| Microsoft Entra | Microsoft 365 / Outlook availability OAuth, including GoDaddy-hosted Microsoft 365 accounts | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID`, `MICROSOFT_REDIRECT_URI`, `INTEGRATION_ENCRYPTION_KEY` |
 | Private object storage | Artist and project files | Provider-specific private bucket credentials |
 | OpenAI | Controlled Sunshine Operator tools after permissions and budget approval | `OPENAI_API_KEY` and server-only model configuration |
 | External password manager | Secure credential storage; the dashboard stores references only | No password-manager secrets are stored in this application |
 
 Confirm the legal business name, domain, public email, invoice terms, internal roles, and privacy/terms language before enabling payments, email, calendar booking, or private client files.
+
+## Outlook Calendar through GoDaddy Microsoft 365
+
+- Register a confidential web application in Microsoft Entra and add the exact redirect URI `https://loveandsunshinenash.com/api/microsoft-calendar?action=callback`.
+- Add delegated Microsoft Graph permissions `User.Read` and `Calendars.ReadWrite`. The application also requests `openid`, `profile`, `email`, and `offline_access` during authorization.
+- GoDaddy credentials are entered only on GoDaddy/Microsoft-controlled sign-in pages. The application stores Microsoft tokens encrypted with `INTEGRATION_ENCRYPTION_KEY`; it never stores the account password.
+- The calendar owner connects and disconnects from **Admin dashboard → Calendar** or **Setup & connections**.
 
 ## Stripe billing
 
