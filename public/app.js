@@ -77,7 +77,6 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
     const guidance = {
       'I’m looking for management': 'A focused management conversation is a strong place to start.',
       'I need publishing support': 'A catalog and publishing conversation is a strong next move.',
-      'I want to write with someone': 'A co-writing conversation is a strong next move.',
       'I’m still finding the fit': 'A short discovery conversation was made for exactly this moment.',
     };
     result.classList.remove('error');
@@ -445,7 +444,7 @@ const pages = {
   invoices: billing,
   inquiries: async () => {
     const items = await load('inquiries');
-    return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · <a href="tel:${encodeURIComponent(item.phone || '')}">${escapeHtml(item.phone || 'No phone')}</a> · Prefers ${escapeHtml(friendly(item.contact_preference || 'email'))} · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || item.idea || 'No additional note.')}</p></div><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
+    return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · <a href="tel:${encodeURIComponent(item.phone || '')}">${escapeHtml(item.phone || 'No phone')}</a> · Prefers ${escapeHtml(friendly(item.contact_preference || 'email'))} · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || (item.availability ? `${item.availability} (${item.time_zone || 'time zone not provided'})` : item.idea) || 'No additional note.')}</p></div><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
   },
   calendar: async () => {
     const [bookings, microsoft] = await Promise.all([load('bookings'), request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' }))]);

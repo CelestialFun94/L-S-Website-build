@@ -12,15 +12,17 @@ module.exports = async function handler(req, res) {
     const kind = input.kind === 'cowrite' ? 'cowrite' : 'starter';
     const path = String(input.path || '').trim().slice(0, 240) || null;
     const idea = String(input.idea || '').trim().slice(0, 5000) || null;
+    const availability = String(input.availability || '').trim().slice(0, 2000) || null;
+    const timeZone = ['ET', 'CT', 'MT', 'PT', 'AKT', 'HT'].includes(input.time_zone) ? input.time_zone : null;
     if (name.length < 2 || !/^\S+@\S+\.\S+$/.test(email)) return json(res, 400, { error: 'Please enter your name and a valid email.' });
     if (phone.length < 7 || !contactPreference) return json(res, 400, { error: 'Please enter a valid phone number and choose SMS or email.' });
     if (kind === 'starter' && !path) return json(res, 400, { error: 'Choose the option that fits best.' });
-    if (kind === 'cowrite' && (!idea || input.consent !== true)) return json(res, 400, { error: 'Tell us about the song and confirm the inquiry notice.' });
+    if (kind === 'cowrite' && (!availability || !timeZone || input.consent !== true)) return json(res, 400, { error: 'List a few good dates and times, select your time zone, and confirm the inquiry notice.' });
 
     const response = await supabase('/rest/v1/inquiries', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ kind, name, email, phone, contact_preference: contactPreference, path, idea, consent: input.consent === true, source: 'website' }),
+      body: JSON.stringify({ kind, name, email, phone, contact_preference: contactPreference, path, idea, availability, time_zone: timeZone, consent: input.consent === true, source: 'website' }),
     });
     if (!response.ok) throw new Error('We could not save your inquiry right now. Please try again.');
     return json(res, 201, { ok: true });

@@ -227,7 +227,8 @@ footer small { grid-column: 1 / -1; margin-top: 32px; padding-top: 18px; border:
 
 dialog { border: 1px solid var(--ink); border-radius: 0; background: var(--cream); box-shadow: 16px 16px 0 var(--sun); }
 dialog h2 { font-family: Lora, serif; }
-dialog input, dialog textarea, dialog select { width: 100%; border: 1px solid var(--ink); border-radius: 0; background: white; padding: .7rem; font: 15px "DM Sans", sans-serif; }
+dialog input:not([type="radio"]):not([type="checkbox"]), dialog textarea, dialog select { width: 100%; border: 1px solid var(--ink); border-radius: 0; background: white; padding: .7rem; font: 15px "DM Sans", sans-serif; }
+dialog legend { margin-bottom: .55rem; font-size: 13px; font-weight: 600; }
 
 @media (max-width: 1020px) {
   .site-header > .button { display: none; }

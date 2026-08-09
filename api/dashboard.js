@@ -6,7 +6,7 @@ const OPERATORS = new Set(['owner', 'admin', 'operations']);
 
 const resources = {
   inquiries: {
-    select: 'id,name,email,phone,contact_preference,kind,path,idea,status,created_at',
+    select: 'id,name,email,phone,contact_preference,kind,path,idea,availability,time_zone,status,created_at',
     update: ['status'],
     roles: OPERATORS,
   },
