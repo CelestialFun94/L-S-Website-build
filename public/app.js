@@ -97,6 +97,7 @@ $$('[data-form]').forEach(form => form.addEventListener('submit', async event =>
 
 let signedInAccount = null;
 let currentView = 'overview';
+let calendarMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 function showDashboard(account) {
   signedInAccount = account;
@@ -147,9 +148,48 @@ function table(title, headings, rows, action = '') {
 const tag = value => `<span class="tag ${['active', 'paid', 'confirmed', 'complete'].includes(String(value).toLowerCase()) ? 'green' : ''}">${escapeHtml(friendly(value))}</span>`;
 const date = value => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : '—';
 const dateTime = value => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : '—';
+const calendarKey = value => {
+  const day = value instanceof Date ? value : new Date(value);
+  return Number.isFinite(day.getTime()) ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}` : '';
+};
+const calendarTime = value => value ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : '';
 const money = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format((cents || 0) / 100);
 const paymentLink = url => url ? `<a class="billing-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open ↗</a>` : '—';
 const addButton = (resource, label) => `<button class="button button-small" data-create="${escapeHtml(resource)}">+ ${escapeHtml(label)}</button>`;
+
+function monthCalendar(outlookEvents, bookings, microsoft, outlookError) {
+  const year = calendarMonthCursor.getFullYear();
+  const month = calendarMonthCursor.getMonth();
+  const gridStart = new Date(year, month, 1 - new Date(year, month, 1).getDay());
+  const today = calendarKey(new Date());
+  const outlookIds = new Set(outlookEvents.map(item => item.id));
+  const events = [
+    ...outlookEvents.map(item => ({ ...item, source: 'outlook' })),
+    ...bookings.filter(item => item.provider !== 'microsoft' && !outlookIds.has(item.provider_event_id)).map(item => ({ ...item, source: 'workspace' })),
+  ].sort((left, right) => new Date(left.starts_at) - new Date(right.starts_at));
+  const byDay = events.reduce((map, item) => {
+    const key = calendarKey(item.starts_at);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+    return map;
+  }, new Map());
+  const days = Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + index);
+    const key = calendarKey(day);
+    const items = byDay.get(key) || [];
+    const chips = items.slice(0, 3).map(item => {
+      const label = `${item.all_day ? 'All day' : calendarTime(item.starts_at)} ${item.title || 'Busy'}`.trim();
+      const content = `<span class="calendar-event-time">${escapeHtml(item.all_day ? 'All day' : calendarTime(item.starts_at))}</span><span>${escapeHtml(item.title || 'Busy')}</span>`;
+      return item.web_url
+        ? `<a class="calendar-event ${item.source}" href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener" title="${escapeHtml(label)}">${content}</a>`
+        : `<span class="calendar-event ${item.source}" title="${escapeHtml(label)}">${content}</span>`;
+    }).join('');
+    return `<div class="calendar-day ${day.getMonth() === month ? '' : 'outside-month'} ${key === today ? 'today' : ''}" data-date="${key}"><div class="calendar-date"><span>${day.getDate()}</span>${key === today ? '<small>Today</small>' : ''}</div><div class="calendar-day-events">${chips}${items.length > 3 ? `<span class="calendar-more">+${items.length - 3} more</span>` : ''}</div></div>`;
+  }).join('');
+  const account = microsoft.connected ? `<span class="calendar-account"><i></i>${escapeHtml(microsoft.accountLabel || 'Outlook connected')}</span>` : '';
+  const connect = !microsoft.connected && microsoft.configured ? '<a class="button button-small" href="/api/microsoft-calendar?action=connect">Connect Outlook</a>' : '';
+  return `<section class="month-calendar" aria-label="Monthly calendar"><div class="calendar-toolbar"><div><p class="eyebrow">Unified calendar</p><h2>${escapeHtml(new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(calendarMonthCursor))}</h2><div class="calendar-sources">${account}<span><i class="workspace-dot"></i>Workspace bookings</span></div></div><div class="calendar-controls"><button type="button" data-calendar-today>Today</button><button type="button" data-calendar-shift="-1" aria-label="Previous month">‹</button><button type="button" data-calendar-shift="1" aria-label="Next month">›</button>${addButton('bookings', 'Booking')}${connect}</div></div>${outlookError ? `<div class="form-result error calendar-error">${escapeHtml(outlookError)}</div>` : ''}<div class="calendar-scroll"><div class="calendar-weekdays">${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `<span>${day}</span>`).join('')}</div><div class="calendar-grid">${days}</div></div></section>`;
+}
 
 const optionList = (items, label = item => item.name) => items.map(item => ({ value: item.id || item.user_id, label: label(item) }));
 
@@ -415,17 +455,7 @@ const pages = {
       try { outlookEvents = (await request('/api/microsoft-calendar?action=events')).data || []; }
       catch (error) { outlookError = error.message; }
     }
-    const message = new URLSearchParams(location.search).get('calendar');
-    const connectionAction = microsoft.connected
-      ? ''
-      : microsoft.configured
-        ? '<a class="button button-small button-light" href="/api/microsoft-calendar?action=connect">Connect Outlook Calendar</a>'
-        : '<span class="calendar-setup-note">Microsoft application credentials are required before sign-in.</span>';
-    return `${message === 'microsoft-connected' ? '<div class="form-result calendar-notice"><strong>Outlook Calendar connected.</strong> Upcoming events are now available in this workspace.</div>' : ''}
-      <section class="calendar-connection ${microsoft.connected ? 'is-connected' : ''}"><div><p class="eyebrow">Microsoft 365 through GoDaddy</p><h2>${microsoft.connected ? escapeHtml(microsoft.calendarName || 'Outlook Calendar') : 'Connect Outlook Calendar'}</h2><p>${microsoft.connected ? `Connected as ${escapeHtml(microsoft.accountLabel || 'Microsoft 365 user')}. Events are read through Microsoft Graph and new Outlook bookings can be created from this dashboard.` : 'Authorize the Microsoft 365 account attached to your GoDaddy email. Your GoDaddy password is never stored by Love & Sunshine.'}</p>${outlookError ? `<div class="form-result error">${escapeHtml(outlookError)}</div>` : ''}</div>${connectionAction}</section>
-      <div class="section-stack">${microsoft.connected ? table('Upcoming Outlook events', ['Event', 'Starts', 'Ends', 'Availability', 'Location', 'Open'], outlookEvents.map(item => [
-        escapeHtml(item.title), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), tag(item.show_as || 'busy'), escapeHtml(item.location || '—'), item.web_url ? `<a href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener">Open in Outlook ↗</a>` : '—',
-      ])) : ''}${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
+    return `${monthCalendar(outlookEvents, bookings, microsoft, outlookError)}<div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
         escapeHtml(item.title), escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), escapeHtml(friendly(item.provider)),
         statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'),
       ]), addButton('bookings', 'Add booking'))}</div>`;
@@ -507,6 +537,14 @@ async function render(view = 'overview') {
     $('#view-content').innerHTML = await pages[view]();
     bindBillingForm();
     $$('[data-create]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.create).catch(error => alert(error.message))));
+    $$('[data-calendar-shift]').forEach(button => button.addEventListener('click', () => {
+      calendarMonthCursor = new Date(calendarMonthCursor.getFullYear(), calendarMonthCursor.getMonth() + Number(button.dataset.calendarShift), 1);
+      render('calendar');
+    }));
+    $('[data-calendar-today]')?.addEventListener('click', () => {
+      calendarMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      render('calendar');
+    });
     $$('[data-update-resource]').forEach(select => select.addEventListener('change', async () => {
       const previous = [...select.options].find(option => option.defaultSelected)?.value || select.value;
       select.disabled = true;
