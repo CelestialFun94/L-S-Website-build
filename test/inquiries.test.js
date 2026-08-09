@@ -29,13 +29,22 @@ test('sends only allowlisted inquiry fields to Supabase', async () => {
     return { ok: true };
   };
   const res = response();
-  await handler({ method: 'POST', body: { kind: 'cowrite', name: 'Ada Artist', email: 'ADA@EXAMPLE.COM', idea: 'A hopeful song', consent: true, status: 'closed', role: 'owner' } }, res);
+  await handler({ method: 'POST', body: { kind: 'cowrite', name: 'Ada Artist', email: 'ADA@EXAMPLE.COM', phone: '(615) 555-0123', contact_preference: 'sms', idea: 'A hopeful song', consent: true, status: 'closed', role: 'owner' } }, res);
   assert.equal(res.statusCode, 201);
   const sent = JSON.parse(request.options.body);
-  assert.deepEqual(Object.keys(sent).sort(), ['consent', 'email', 'idea', 'kind', 'name', 'path', 'source'].sort());
+  assert.deepEqual(Object.keys(sent).sort(), ['consent', 'contact_preference', 'email', 'idea', 'kind', 'name', 'path', 'phone', 'source'].sort());
   assert.equal(sent.email, 'ada@example.com');
+  assert.equal(sent.phone, '(615) 555-0123');
+  assert.equal(sent.contact_preference, 'sms');
   assert.equal(sent.status, undefined);
   assert.equal(sent.role, undefined);
+});
+
+test('requires a phone number and contact preference', async () => {
+  const res = response();
+  await handler({ method: 'POST', body: { kind: 'starter', name: 'Ada Artist', email: 'ada@example.com', path: 'I need publishing support' } }, res);
+  assert.equal(res.statusCode, 400);
+  assert.match(res.body.error, /phone number/i);
 });
 
 test('silently accepts honeypot spam without a database request', async () => {

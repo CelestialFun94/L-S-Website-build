@@ -7,17 +7,20 @@ module.exports = async function handler(req, res) {
     if (input.company) return json(res, 200, { ok: true });
     const name = String(input.name || '').trim().slice(0, 120);
     const email = String(input.email || '').trim().toLowerCase().slice(0, 320);
+    const phone = String(input.phone || '').trim().slice(0, 40);
+    const contactPreference = ['sms', 'email'].includes(input.contact_preference) ? input.contact_preference : '';
     const kind = input.kind === 'cowrite' ? 'cowrite' : 'starter';
     const path = String(input.path || '').trim().slice(0, 240) || null;
     const idea = String(input.idea || '').trim().slice(0, 5000) || null;
     if (name.length < 2 || !/^\S+@\S+\.\S+$/.test(email)) return json(res, 400, { error: 'Please enter your name and a valid email.' });
+    if (phone.length < 7 || !contactPreference) return json(res, 400, { error: 'Please enter a valid phone number and choose SMS or email.' });
     if (kind === 'starter' && !path) return json(res, 400, { error: 'Choose the option that fits best.' });
     if (kind === 'cowrite' && (!idea || input.consent !== true)) return json(res, 400, { error: 'Tell us about the song and confirm the inquiry notice.' });
 
     const response = await supabase('/rest/v1/inquiries', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ kind, name, email, path, idea, consent: input.consent === true, source: 'website' }),
+      body: JSON.stringify({ kind, name, email, phone, contact_preference: contactPreference, path, idea, consent: input.consent === true, source: 'website' }),
     });
     if (!response.ok) throw new Error('We could not save your inquiry right now. Please try again.');
     return json(res, 201, { ok: true });
