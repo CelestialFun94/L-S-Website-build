@@ -19,7 +19,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 .site-header {
   position: relative;
   z-index: 10;
-  height: 132px;
+  height: 160px;
   padding: 0 clamp(22px, 4vw, 64px);
   background: rgba(255, 250, 240, .96);
   backdrop-filter: blur(14px);
@@ -35,8 +35,8 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
   text-decoration: none;
 }
 
-.header-logo-window { position: relative; display: block; width: 320px; height: 122px; overflow: hidden; }
-.header-logo-window img { position: absolute; left: 50%; top: 48%; width: 92%; height: auto; transform: translate(-50%, -50%); }
+.header-logo-window { position: relative; display: block; width: 420px; height: 150px; overflow: hidden; }
+.header-logo-window img { position: absolute; left: 50%; top: 48%; width: 88%; height: auto; transform: translate(-50%, -50%); }
 .site-header nav {
   display: none;
   position: absolute;
@@ -104,7 +104,7 @@ body:has(.dashboard:not([hidden])) footer { visibility: hidden; }
 }
 
 .hero {
-  min-height: calc(100vh - 132px);
+  min-height: calc(100vh - 160px);
   padding: 0;
   border-bottom: 1px solid var(--ink);
   display: grid;
@@ -271,8 +271,8 @@ dialog input, dialog textarea { border-color: var(--ink); border-radius: 0; }
 
 @media (max-width: 680px) {
   html { scroll-padding-top: 18px; }
-  .site-header { height: 96px; padding: 0 18px; }
-  .header-logo-window { width: 210px; height: 88px; }
+  .site-header { height: 110px; padding: 0 16px; }
+  .header-logo-window { width: 250px; height: 100px; }
   .nav-toggle { padding: 10px 0; }
   .hero { min-height: auto; }
   .hero-copy { padding: 72px 22px 62px; }
