@@ -363,7 +363,7 @@ async function settings() {
     const account = isMicrosoft ? microsoft.accountLabel : item.account_label;
     const action = isMicrosoft
       ? microsoft.connected
-        ? '<button class="integration-action secondary" data-microsoft-disconnect>Disconnect</button>'
+        ? ''
         : microsoft.configured
           ? '<a class="integration-action" href="/api/microsoft-calendar?action=connect">Connect Outlook</a>'
           : '<span class="setup-needed">Microsoft app registration needed</span>'
@@ -417,18 +417,18 @@ const pages = {
     }
     const message = new URLSearchParams(location.search).get('calendar');
     const connectionAction = microsoft.connected
-      ? '<button class="button button-small button-light" data-microsoft-disconnect>Disconnect Outlook</button>'
+      ? ''
       : microsoft.configured
         ? '<a class="button button-small button-light" href="/api/microsoft-calendar?action=connect">Connect Outlook Calendar</a>'
         : '<span class="calendar-setup-note">Microsoft application credentials are required before sign-in.</span>';
     return `${message === 'microsoft-connected' ? '<div class="form-result calendar-notice"><strong>Outlook Calendar connected.</strong> Upcoming events are now available in this workspace.</div>' : ''}
       <section class="calendar-connection ${microsoft.connected ? 'is-connected' : ''}"><div><p class="eyebrow">Microsoft 365 through GoDaddy</p><h2>${microsoft.connected ? escapeHtml(microsoft.calendarName || 'Outlook Calendar') : 'Connect Outlook Calendar'}</h2><p>${microsoft.connected ? `Connected as ${escapeHtml(microsoft.accountLabel || 'Microsoft 365 user')}. Events are read through Microsoft Graph and new Outlook bookings can be created from this dashboard.` : 'Authorize the Microsoft 365 account attached to your GoDaddy email. Your GoDaddy password is never stored by Love & Sunshine.'}</p>${outlookError ? `<div class="form-result error">${escapeHtml(outlookError)}</div>` : ''}</div>${connectionAction}</section>
-      <div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
+      <div class="section-stack">${microsoft.connected ? table('Upcoming Outlook events', ['Event', 'Starts', 'Ends', 'Availability', 'Location', 'Open'], outlookEvents.map(item => [
+        escapeHtml(item.title), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), tag(item.show_as || 'busy'), escapeHtml(item.location || '—'), item.web_url ? `<a href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener">Open in Outlook ↗</a>` : '—',
+      ])) : ''}${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
         escapeHtml(item.title), escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), escapeHtml(friendly(item.provider)),
         statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'),
-      ]), addButton('bookings', 'Add booking'))}${microsoft.connected ? table('Upcoming Outlook events', ['Event', 'Starts', 'Ends', 'Availability', 'Location', 'Open'], outlookEvents.map(item => [
-        escapeHtml(item.title), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), tag(item.show_as || 'busy'), escapeHtml(item.location || '—'), item.web_url ? `<a href="${escapeHtml(item.web_url)}" target="_blank" rel="noopener">Open in Outlook ↗</a>` : '—',
-      ])) : ''}</div>`;
+      ]), addButton('bookings', 'Add booking'))}</div>`;
   },
   files: async () => `<p class="integration-note"><strong>File catalog enabled.</strong> Approved public brand assets remain in the GitHub repository. Connect Cloudflare R2 before uploading private artist files; until then this section stores metadata and references only.</p>${table('File records', ['Name', 'Artist / project', 'Provider', 'Type', 'Status', 'Added'], (await load('file_records')).map(item => [
     `<strong>${escapeHtml(item.name)}</strong>${item.object_key ? `<small>${escapeHtml(item.object_key)}</small>` : ''}`, escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(friendly(item.storage_provider)), escapeHtml(item.mime_type || '—'), tag(item.status), escapeHtml(date(item.created_at)),
@@ -507,15 +507,6 @@ async function render(view = 'overview') {
     $('#view-content').innerHTML = await pages[view]();
     bindBillingForm();
     $$('[data-create]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.create).catch(error => alert(error.message))));
-    $$('[data-microsoft-disconnect]').forEach(button => button.addEventListener('click', async () => {
-      if (!confirm('Disconnect Outlook Calendar from this workspace? Existing Outlook events will not be deleted.')) return;
-      button.disabled = true;
-      try {
-        await request('/api/microsoft-calendar?action=disconnect', { method: 'DELETE' });
-        await render(currentView);
-      } catch (error) { alert(error.message); }
-      finally { button.disabled = false; }
-    }));
     $$('[data-update-resource]').forEach(select => select.addEventListener('change', async () => {
       const previous = [...select.options].find(option => option.defaultSelected)?.value || select.value;
       select.disabled = true;
