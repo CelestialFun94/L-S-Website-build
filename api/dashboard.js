@@ -1,13 +1,14 @@
-const { json, method, session, supabase } = require('./_lib');
+const { adminSupabase, json, method, session, supabase } = require('./_lib');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MANAGERS = new Set(['owner', 'admin']);
 const OPERATORS = new Set(['owner', 'admin', 'operations']);
+const OWNERS = new Set(['owner']);
 
 const resources = {
   inquiries: {
     select: 'id,name,email,phone,contact_preference,kind,path,idea,availability,time_zone,status,created_at',
-    update: ['status'],
+    update: ['name', 'email', 'phone', 'contact_preference', 'kind', 'path', 'idea', 'availability', 'time_zone', 'status'],
     roles: OPERATORS,
   },
   artists: {
@@ -26,11 +27,12 @@ const resources = {
     select: 'id,project_id,artist_id,title,description,status,priority,due_date,assigned_user_id,completed_at,project:projects(name),artist:artists(name),assignee:profiles(display_name),created_at,updated_at',
     create: ['project_id', 'artist_id', 'title', 'description', 'status', 'priority', 'due_date', 'assigned_user_id'],
     update: ['project_id', 'artist_id', 'title', 'description', 'status', 'priority', 'due_date', 'assigned_user_id', 'completed_at'],
-    required: ['title'], roles: OPERATORS,
+    required: ['title', 'artist_id'], roles: OPERATORS,
   },
   activities: {
     select: 'id,artist_id,project_id,actor_user_id,activity_type,summary,detail,artist:artists(name),project:projects(name),actor:profiles(display_name),created_at',
     create: ['artist_id', 'project_id', 'activity_type', 'summary', 'detail'],
+    update: ['artist_id', 'project_id', 'activity_type', 'summary', 'detail'],
     required: ['summary'], roles: OPERATORS,
   },
   songs: {
@@ -54,7 +56,7 @@ const resources = {
   file_records: {
     select: 'id,artist_id,project_id,name,object_key,mime_type,size_bytes,storage_provider,status,notes,artist:artists(name),project:projects(name),creator:profiles(display_name),created_at,updated_at',
     create: ['artist_id', 'project_id', 'name', 'object_key', 'mime_type', 'size_bytes', 'storage_provider', 'status', 'notes'],
-    update: ['artist_id', 'project_id', 'name', 'status', 'notes'],
+    update: ['artist_id', 'project_id', 'name', 'object_key', 'mime_type', 'size_bytes', 'storage_provider', 'status', 'notes'],
     required: ['name'], roles: OPERATORS,
   },
   vault_links: {
@@ -74,6 +76,10 @@ const resources = {
   },
   profiles: {
     select: 'user_id,display_name,role,active,created_at,updated_at',
+    update: ['display_name', 'role', 'active'],
+    idField: 'user_id',
+    useAdmin: true,
+    roles: OWNERS,
   },
   audit_events: {
     select: 'id,actor_user_id,action,target_type,target_id,outcome,metadata,actor:profiles(display_name),created_at',
@@ -95,6 +101,11 @@ function cleanValue(field, value) {
     const number = Number(value);
     if (!Number.isFinite(number)) throw new Error(`${field.replaceAll('_', ' ')} must be a number.`);
     return number;
+  }
+  if (field === 'active') {
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    throw new Error('Active must be true or false.');
   }
   if (field.endsWith('_id') || field === 'related_id') {
     if (value === null) return null;
@@ -167,14 +178,22 @@ module.exports = async function handler(req, res) {
     const id = String(req.body?.id || '');
     if (!UUID.test(id)) return json(res, 400, { error: 'A valid record ID is required.' });
     const record = payload(config, req.body, 'update');
-    if (resource === 'inquiries' && !['new', 'reviewing', 'contacted', 'closed'].includes(record.status)) {
+    if (resource === 'inquiries' && record.status && !['new', 'reviewing', 'contacted', 'closed'].includes(record.status)) {
       return json(res, 400, { error: 'Invalid inquiry status.' });
     }
     if (resource === 'tasks' && record.status === 'complete' && !record.completed_at) record.completed_at = new Date().toISOString();
     if (resource === 'tasks' && record.status && record.status !== 'complete') record.completed_at = null;
-    const updated = await api(current.access, `/rest/v1/${resource}?id=eq.${encodeURIComponent(id)}`, {
-      method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(record),
-    });
+    const idField = config.idField || 'id';
+    const updatePath = `/rest/v1/${resource}?${idField}=eq.${encodeURIComponent(id)}`;
+    const updateOptions = { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(record) };
+    const updated = config.useAdmin
+      ? await (async () => {
+        const response = await adminSupabase(updatePath, updateOptions);
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || data?.error || 'Workspace request failed.');
+        return data;
+      })()
+      : await api(current.access, updatePath, updateOptions);
     if (!updated[0]) return json(res, 404, { error: 'Record not found.' });
     await audit(current, 'update', resource, id, Object.keys(record));
     return json(res, 200, { data: updated[0] });

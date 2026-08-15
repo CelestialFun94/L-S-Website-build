@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { randomBytes } = require('node:crypto');
-const { clean, parseJwt, safeEqual, seal, unseal } = require('../api/microsoft-calendar')._test;
+const { clean, cleanBody, hasScope, parseJwt, safeEqual, seal, unseal } = require('../api/microsoft-calendar')._test;
 
 test('Microsoft OAuth values are authenticated and encrypted at rest', () => {
   const key = randomBytes(32);
@@ -19,4 +19,10 @@ test('Microsoft state comparison and token claim parsing fail safely', () => {
   assert.equal(parseJwt(`header.${payload}.signature`).tid, 'tenant-example');
   assert.deepEqual(parseJwt('invalid'), {});
   assert.equal(clean('  Calendar   event  ', 100), 'Calendar event');
+});
+
+test('Outlook mail scope and message bodies are handled safely', () => {
+  assert.equal(hasScope({ scopes: ['User.Read', 'https://graph.microsoft.com/Mail.Send'] }, 'Mail.Send'), true);
+  assert.equal(hasScope({ scopes: ['Calendars.ReadWrite'] }, 'Mail.Send'), false);
+  assert.equal(cleanBody(' First line\r\n\r\nSecond line ', 100), 'First line\n\nSecond line');
 });

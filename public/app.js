@@ -158,6 +158,7 @@ const calendarTime = value => value ? new Intl.DateTimeFormat('en-US', { hour: '
 const money = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format((cents || 0) / 100);
 const paymentLink = url => url ? `<a class="billing-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open ↗</a>` : '—';
 const addButton = (resource, label) => `<button class="button button-small" data-create="${escapeHtml(resource)}">+ ${escapeHtml(label)}</button>`;
+const editButton = (resource, id) => `<button class="edit-record" type="button" data-edit-resource="${escapeHtml(resource)}" data-edit-id="${escapeHtml(id)}">Edit</button>`;
 
 function monthCalendar(outlookEvents, bookings, microsoft, outlookError) {
   const year = calendarMonthCursor.getFullYear();
@@ -195,19 +196,35 @@ function monthCalendar(outlookEvents, bookings, microsoft, outlookError) {
 
 const optionList = (items, label = item => item.name) => items.map(item => ({ value: item.id || item.user_id, label: label(item) }));
 
-function inputField(field) {
+function localDateTime(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) return '';
+  return new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function inputField(field, record = {}) {
   const required = field.required ? ' required' : '';
   const placeholder = field.placeholder ? ` placeholder="${escapeHtml(field.placeholder)}"` : '';
   const attributes = `${required}${placeholder}${field.min !== undefined ? ` min="${field.min}"` : ''}${field.max !== undefined ? ` max="${field.max}"` : ''}${field.step ? ` step="${field.step}"` : ''}`;
+  const rawValue = record[field.name] ?? '';
+  const value = field.type === 'datetime-local' ? localDateTime(rawValue) : field.type === 'date' && rawValue ? String(rawValue).slice(0, 10) : String(rawValue);
   if (field.type === 'select') {
-    return `<label>${escapeHtml(field.label)}<select name="${escapeHtml(field.name)}"${required}><option value="">${escapeHtml(field.empty || 'Choose…')}</option>${field.options.map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('')}</select></label>`;
+    return `<label>${escapeHtml(field.label)}<select name="${escapeHtml(field.name)}"${required}><option value="">${escapeHtml(field.empty || 'Choose…')}</option>${field.options.map(option => `<option value="${escapeHtml(option.value)}" ${String(option.value) === value ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}</select></label>`;
   }
-  if (field.type === 'textarea') return `<label class="record-wide">${escapeHtml(field.label)}<textarea name="${escapeHtml(field.name)}" rows="4"${attributes}></textarea></label>`;
-  return `<label class="${field.wide ? 'record-wide' : ''}">${escapeHtml(field.label)}<input name="${escapeHtml(field.name)}" type="${escapeHtml(field.type || 'text')}"${attributes} /></label>`;
+  if (field.type === 'textarea') return `<label class="record-wide">${escapeHtml(field.label)}<textarea name="${escapeHtml(field.name)}" rows="4"${attributes}>${escapeHtml(value)}</textarea></label>`;
+  return `<label class="${field.wide ? 'record-wide' : ''}">${escapeHtml(field.label)}<input name="${escapeHtml(field.name)}" type="${escapeHtml(field.type || 'text')}" value="${escapeHtml(value)}"${attributes} /></label>`;
 }
 
 async function recordDefinition(resource) {
   const status = values => values.map(value => ({ value, label: friendly(value) }));
+  if (resource === 'inquiries') return { title: 'Edit an inquiry', fields: [
+    { name: 'name', label: 'Contact name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'phone', label: 'Phone' }, { name: 'contact_preference', label: 'Preferred contact', type: 'select', options: status(['email', 'sms']) },
+    { name: 'kind', label: 'Inquiry type' }, { name: 'status', label: 'Status', type: 'select', options: status(['new', 'reviewing', 'contacted', 'closed']) },
+    { name: 'path', label: 'Requested support', type: 'textarea' }, { name: 'idea', label: 'Idea or note', type: 'textarea' },
+    { name: 'availability', label: 'Availability', type: 'textarea' }, { name: 'time_zone', label: 'Time zone' },
+  ] };
   if (resource === 'artists') return { title: 'Add an artist', fields: [
     { name: 'name', label: 'Artist or client name', required: true, wide: true }, { name: 'email', label: 'Email', type: 'email' },
     { name: 'phone', label: 'Phone' }, { name: 'stage', label: 'Development stage' }, { name: 'genres', label: 'Genres' },
@@ -229,8 +246,8 @@ async function recordDefinition(resource) {
     const [projects, artists, profiles] = await Promise.all(['projects', 'artists', 'profiles'].map(load));
     return { title: 'Add a task', fields: [
       { name: 'title', label: 'Task', required: true, wide: true },
-      { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) }, { name: 'artist_id', label: 'Artist', type: 'select', options: optionList(artists) },
-      { name: 'assigned_user_id', label: 'Assignee', type: 'select', options: optionList(profiles, item => item.display_name) },
+      { name: 'artist_id', label: 'Roster assignee', type: 'select', required: true, options: optionList(artists) }, { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) },
+      { name: 'assigned_user_id', label: 'Team coordinator', type: 'select', options: optionList(profiles, item => item.display_name) },
       { name: 'status', label: 'Status', type: 'select', options: status(['todo', 'in_progress', 'waiting', 'complete']) },
       { name: 'priority', label: 'Priority', type: 'select', options: status(['low', 'normal', 'high', 'urgent']) },
       { name: 'due_date', label: 'Due date', type: 'date' }, { name: 'description', label: 'Details', type: 'textarea' },
@@ -271,7 +288,7 @@ async function recordDefinition(resource) {
     return { title: 'Add a booking', fields: [
       { name: 'title', label: 'Event title', required: true, wide: true }, { name: 'starts_at', label: 'Starts', type: 'datetime-local', required: true },
       { name: 'ends_at', label: 'Ends', type: 'datetime-local', required: true }, { name: 'location', label: 'Location or link' },
-      { name: 'provider', label: 'Calendar', type: 'select', options: [{ value: 'manual', label: 'Workspace only' }, ...(microsoft.connected ? [{ value: 'microsoft', label: 'Outlook Calendar' }] : [])] },
+      { name: 'provider', label: 'Calendar', type: 'select', options: [{ value: 'manual', label: 'Workspace only' }, { value: 'microsoft', label: microsoft.connected ? 'Outlook Calendar' : 'Outlook Calendar (reconnect required)' }] },
       { name: 'artist_id', label: 'Artist', type: 'select', options: optionList(artists) }, { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) },
       { name: 'status', label: 'Status', type: 'select', options: status(['tentative', 'confirmed', 'completed', 'canceled']) }, { name: 'notes', label: 'Notes', type: 'textarea' },
     ] };
@@ -281,7 +298,8 @@ async function recordDefinition(resource) {
     return { title: 'Add a file reference', fields: [
       { name: 'name', label: 'File name', required: true, wide: true }, { name: 'artist_id', label: 'Artist', type: 'select', options: optionList(artists) },
       { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) }, { name: 'object_key', label: 'Repository path or R2 object key', wide: true },
-      { name: 'mime_type', label: 'File type' }, { name: 'size_bytes', label: 'Size in bytes', type: 'number', min: 0 }, { name: 'notes', label: 'Notes', type: 'textarea' },
+      { name: 'mime_type', label: 'File type' }, { name: 'size_bytes', label: 'Size in bytes', type: 'number', min: 0 },
+      { name: 'storage_provider', label: 'Storage provider' }, { name: 'status', label: 'Status' }, { name: 'notes', label: 'Notes', type: 'textarea' },
     ] };
   }
   if (resource === 'vault_links') {
@@ -298,18 +316,26 @@ async function recordDefinition(resource) {
     { name: 'risk_level', label: 'Risk level', type: 'select', options: status(['read_only', 'internal_write', 'approval_required']) },
     { name: 'content', label: 'Notes or proposed action', type: 'textarea' },
   ] };
+  if (resource === 'profiles') return { title: 'Edit team access', fields: [
+    { name: 'display_name', label: 'Display name', required: true, wide: true },
+    { name: 'role', label: 'Role', type: 'select', required: true, options: status(['owner', 'admin', 'operations', 'finance', 'read_only']) },
+    { name: 'active', label: 'Access status', type: 'select', required: true, options: [{ value: 'true', label: 'Active' }, { value: 'false', label: 'Disabled' }] },
+  ] };
   throw new Error('This record type is not available.');
 }
 
-async function openRecordForm(resource) {
+async function openRecordForm(resource, id = null) {
   const modal = $('#record-modal');
   const form = $('#record-form');
   const result = $('#record-result');
-  const definition = await recordDefinition(resource);
-  $('#record-modal-title').textContent = definition.title;
+  const [definition, records] = await Promise.all([recordDefinition(resource), id ? load(resource) : Promise.resolve([])]);
+  const record = id ? records.find(item => String(item.id || item.user_id) === String(id)) : null;
+  if (id && !record) throw new Error('That workspace record could not be found.');
+  $('#record-modal-title').textContent = record ? 'Edit workspace record' : definition.title;
   $('#record-modal-eyebrow').textContent = friendly(resource);
   form.dataset.resource = resource;
-  form.innerHTML = `<div class="record-grid">${definition.fields.map(inputField).join('')}</div><button class="button" type="submit">Save to workspace <span>→</span></button>`;
+  form.dataset.id = record ? String(record.id || record.user_id) : '';
+  form.innerHTML = `<div class="record-grid">${definition.fields.map(field => inputField(field, record || {})).join('')}</div><button class="button" type="submit">${record ? 'Save changes' : 'Save to workspace'} <span>→</span></button>`;
   result.hidden = true;
   openModal(modal);
 }
@@ -324,10 +350,12 @@ $('#record-form')?.addEventListener('submit', async event => {
   result.hidden = true;
   try {
     const values = Object.fromEntries(new FormData(form));
-    const url = form.dataset.resource === 'bookings' && values.provider === 'microsoft'
-      ? '/api/microsoft-calendar?action=create_event'
+    const editing = Boolean(form.dataset.id);
+    const microsoftBooking = form.dataset.resource === 'bookings' && values.provider === 'microsoft';
+    const url = microsoftBooking
+      ? `/api/microsoft-calendar?action=${editing ? 'update_event' : 'create_event'}`
       : `/api/dashboard?resource=${encodeURIComponent(form.dataset.resource)}`;
-    await request(url, { method: 'POST', body: JSON.stringify(values) });
+    await request(url, { method: editing ? 'PATCH' : 'POST', body: JSON.stringify(editing ? { ...values, id: form.dataset.id } : values) });
     closeModal($('#record-modal'));
     await render(currentView);
   } catch (error) {
@@ -336,7 +364,7 @@ $('#record-form')?.addEventListener('submit', async event => {
     result.hidden = false;
   } finally {
     submit.disabled = false;
-    submit.innerHTML = 'Save to workspace <span>→</span>';
+    submit.innerHTML = `${form.dataset.id ? 'Save changes' : 'Save to workspace'} <span>→</span>`;
   }
 });
 
@@ -417,37 +445,51 @@ async function settings() {
 
 const pages = {
   overview,
-  artists: async () => table('Artists & CRM', ['Name', 'Contact', 'Stage', 'Status', 'Next step'], (await load('artists')).map(item => [
-    `<strong>${escapeHtml(item.name)}</strong>${item.genres ? `<small>${escapeHtml(item.genres)}</small>` : ''}`,
-    item.email ? `<a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a>` : escapeHtml(item.phone || '—'),
-    escapeHtml(item.stage || '—'), tag(item.status), escapeHtml(item.next_step || '—'),
-  ]), addButton('artists', 'Add artist')),
-  projects: async () => table('Projects & roadmaps', ['Project', 'Artist', 'Type', 'Progress', 'Priority', 'Status', 'Target'], (await load('projects')).map(item => [
-    `<strong>${escapeHtml(item.name)}</strong>${item.next_step ? `<small>Next: ${escapeHtml(item.next_step)}</small>` : ''}`, escapeHtml(item.artist?.name || '—'), escapeHtml(item.project_type || '—'),
-    `<div class="progress"><span style="width:${Math.max(0, Math.min(100, item.progress || 0))}%"></span></div><small>${item.progress || 0}%</small>`, tag(item.priority),
-    statusSelect('projects', item.id, 'status', item.status, ['planning', 'active', 'blocked', 'complete', 'archived']), escapeHtml(date(item.target_date)),
-  ]), addButton('projects', 'Create project')),
-  tasks: async () => table('Tasks', ['Task', 'Related to', 'Assignee', 'Priority', 'Status', 'Due'], (await load('tasks')).map(item => [
-    `<strong>${escapeHtml(item.title)}</strong>${item.description ? `<small>${escapeHtml(item.description)}</small>` : ''}`, escapeHtml(item.project?.name || item.artist?.name || 'Workspace'),
-    escapeHtml(item.assignee?.display_name || 'Unassigned'), tag(item.priority), statusSelect('tasks', item.id, 'status', item.status, ['todo', 'in_progress', 'waiting', 'complete', 'canceled']), escapeHtml(date(item.due_date)),
-  ]), addButton('tasks', 'Add task')),
-  activity: async () => table('Activity timeline', ['Type', 'Summary', 'Artist', 'Project', 'By', 'When'], (await load('activities')).map(item => [
-    tag(item.activity_type), escapeHtml(item.summary), escapeHtml(item.artist?.name || '—'), escapeHtml(item.project?.name || '—'), escapeHtml(item.actor?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)),
-  ]), addButton('activities', 'Log activity')),
+  artists: async () => {
+    const items = await load('artists');
+    return table('Artists & CRM', ['Name', 'Email', 'Phone', 'Stage', 'Status', 'Next step', 'Actions'], items.map(item => [
+      `<strong>${escapeHtml(item.name)}</strong>${item.genres ? `<small>${escapeHtml(item.genres)}</small>` : ''}`,
+      item.email ? `<a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a>` : '—',
+      item.phone ? `<a href="tel:${encodeURIComponent(item.phone)}">${escapeHtml(item.phone)}</a>` : '—',
+      escapeHtml(item.stage || '—'), tag(item.status), escapeHtml(item.next_step || '—'), editButton('artists', item.id),
+    ]), addButton('artists', 'Add artist'));
+  },
+  projects: async () => {
+    const items = await load('projects');
+    return table('Projects & roadmaps', ['Project', 'Artist', 'Type', 'Progress', 'Priority', 'Status', 'Target', 'Actions'], items.map(item => [
+      `<strong>${escapeHtml(item.name)}</strong>${item.next_step ? `<small>Next: ${escapeHtml(item.next_step)}</small>` : ''}`, escapeHtml(item.artist?.name || '—'), escapeHtml(item.project_type || '—'),
+      `<div class="progress"><span style="width:${Math.max(0, Math.min(100, item.progress || 0))}%"></span></div><small>${item.progress || 0}%</small>`, tag(item.priority),
+      statusSelect('projects', item.id, 'status', item.status, ['planning', 'active', 'blocked', 'complete', 'archived']), escapeHtml(date(item.target_date)), editButton('projects', item.id),
+    ]), addButton('projects', 'Create project'));
+  },
+  tasks: async () => {
+    const items = await load('tasks');
+    return table('Tasks by roster', ['Task', 'Roster assignee', 'Project', 'Team coordinator', 'Priority', 'Status', 'Due', 'Actions'], items.map(item => [
+      `<strong>${escapeHtml(item.title)}</strong>${item.description ? `<small>${escapeHtml(item.description)}</small>` : ''}`,
+      `<strong>${escapeHtml(item.artist?.name || 'Needs roster assignment')}</strong>`, escapeHtml(item.project?.name || '—'),
+      escapeHtml(item.assignee?.display_name || 'Unassigned'), tag(item.priority), statusSelect('tasks', item.id, 'status', item.status, ['todo', 'in_progress', 'waiting', 'complete', 'canceled']), escapeHtml(date(item.due_date)), editButton('tasks', item.id),
+    ]), addButton('tasks', 'Add task'));
+  },
+  activity: async () => {
+    const items = await load('activities');
+    return table('Activity timeline', ['Type', 'Summary', 'Artist', 'Project', 'By', 'When', 'Actions'], items.map(item => [
+      tag(item.activity_type), escapeHtml(item.summary), escapeHtml(item.artist?.name || '—'), escapeHtml(item.project?.name || '—'), escapeHtml(item.actor?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)), editButton('activities', item.id),
+    ]), addButton('activities', 'Log activity'));
+  },
   songs: async () => {
     const [songs, contributors] = await Promise.all(['songs', 'song_contributors'].map(load));
     const totals = contributors.reduce((map, item) => map.set(item.song_id, (map.get(item.song_id) || 0) + Number(item.share_percent || 0)), new Map());
-    return `<div class="section-stack">${table('Songs & works', ['Song', 'Project', 'Status', 'Splits', 'Share total', 'Release'], songs.map(item => [
+    return `<div class="section-stack">${table('Songs & works', ['Song', 'Project', 'Status', 'Splits', 'Share total', 'Release', 'Actions'], songs.map(item => [
       `<strong>${escapeHtml(item.title)}</strong>${item.genre ? `<small>${escapeHtml(item.genre)}${item.bpm ? ` · ${item.bpm} BPM` : ''}</small>` : ''}`,
-      escapeHtml(item.project?.name || '—'), tag(item.status), tag(item.split_status), `<span class="${totals.get(item.id) === 100 ? 'share-ok' : 'share-warning'}">${totals.get(item.id) || 0}%</span>`, escapeHtml(date(item.release_date)),
-    ]), addButton('songs', 'Add song'))}${table('Collaborators & ownership claims', ['Song', 'Contributor', 'Role', 'PRO / publisher', 'Share', 'Confirmed'], contributors.map(item => [
-      escapeHtml(item.song?.title || '—'), escapeHtml(item.contributor_name), escapeHtml(friendly(item.contributor_role)), escapeHtml([item.pro_affiliation, item.publisher].filter(Boolean).join(' · ') || '—'), `${escapeHtml(item.share_percent)}%`, item.confirmed_at ? tag('confirmed') : tag('pending'),
+      escapeHtml(item.project?.name || '—'), tag(item.status), tag(item.split_status), `<span class="${totals.get(item.id) === 100 ? 'share-ok' : 'share-warning'}">${totals.get(item.id) || 0}%</span>`, escapeHtml(date(item.release_date)), editButton('songs', item.id),
+    ]), addButton('songs', 'Add song'))}${table('Collaborators & ownership claims', ['Song', 'Contributor', 'Role', 'PRO / publisher', 'Share', 'Confirmed', 'Actions'], contributors.map(item => [
+      escapeHtml(item.song?.title || '—'), escapeHtml(item.contributor_name), escapeHtml(friendly(item.contributor_role)), escapeHtml([item.pro_affiliation, item.publisher].filter(Boolean).join(' · ') || '—'), `${escapeHtml(item.share_percent)}%`, item.confirmed_at ? tag('confirmed') : tag('pending'), editButton('song_contributors', item.id),
     ]), addButton('song_contributors', 'Add collaborator'))}</div>`;
   },
   invoices: billing,
   inquiries: async () => {
     const items = await load('inquiries');
-    return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · <a href="tel:${encodeURIComponent(item.phone || '')}">${escapeHtml(item.phone || 'No phone')}</a> · Prefers ${escapeHtml(friendly(item.contact_preference || 'email'))} · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || (item.availability ? `${item.availability} (${item.time_zone || 'time zone not provided'})` : item.idea) || 'No additional note.')}</p></div><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
+    return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · <a href="tel:${encodeURIComponent(item.phone || '')}">${escapeHtml(item.phone || 'No phone')}</a> · Prefers ${escapeHtml(friendly(item.contact_preference || 'email'))} · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || (item.availability ? `${item.availability} (${item.time_zone || 'time zone not provided'})` : item.idea) || 'No additional note.')}</p></div><div class="inquiry-actions"><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label>${editButton('inquiries', item.id)}</div></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
   },
   calendar: async () => {
     const [bookings, microsoft] = await Promise.all([load('bookings'), request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' }))]);
@@ -457,22 +499,40 @@ const pages = {
       try { outlookEvents = (await request('/api/microsoft-calendar?action=events')).data || []; }
       catch (error) { outlookError = error.message; }
     }
-    return `${monthCalendar(outlookEvents, bookings, microsoft, outlookError)}<div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location'], bookings.map(item => [
+    return `${monthCalendar(outlookEvents, bookings, microsoft, outlookError)}<div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location', 'Actions'], bookings.map(item => [
         escapeHtml(item.title), escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(dateTime(item.starts_at)), escapeHtml(dateTime(item.ends_at)), escapeHtml(friendly(item.provider)),
-        statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'),
+        statusSelect('bookings', item.id, 'status', item.status, ['tentative', 'confirmed', 'completed', 'canceled']), escapeHtml(item.location || '—'), editButton('bookings', item.id),
       ]), addButton('bookings', 'Add booking'))}</div>`;
   },
-  files: async () => `<p class="integration-note"><strong>File catalog enabled.</strong> Approved public brand assets remain in the GitHub repository. Connect Cloudflare R2 before uploading private artist files; until then this section stores metadata and references only.</p>${table('File records', ['Name', 'Artist / project', 'Provider', 'Type', 'Status', 'Added'], (await load('file_records')).map(item => [
-    `<strong>${escapeHtml(item.name)}</strong>${item.object_key ? `<small>${escapeHtml(item.object_key)}</small>` : ''}`, escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(friendly(item.storage_provider)), escapeHtml(item.mime_type || '—'), tag(item.status), escapeHtml(date(item.created_at)),
+  communications: async () => {
+    const [artists, microsoft, activities] = await Promise.all([
+      load('artists'),
+      request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, mailEnabled: false, status: 'not_configured' })),
+      load('activities'),
+    ]);
+    const recipients = artists.filter(item => item.email);
+    const connectionAction = microsoft.configured
+      ? `<a class="button button-small" href="/api/microsoft-calendar?action=connect">${microsoft.connected ? 'Reconnect Outlook' : 'Connect Outlook'}</a>`
+      : '<span class="setup-needed">Microsoft app registration needed</span>';
+    const composer = microsoft.connected && microsoft.mailEnabled
+      ? `<form id="communication-form" class="communication-form"><div class="communication-heading"><div><p class="eyebrow">Outlook · ${escapeHtml(microsoft.accountLabel || 'Work email')}</p><h2>Compose client email</h2></div><span class="connection-state connected">Ready to send</span></div><div class="record-grid"><label>Roster contact<select name="artist_id" id="communication-artist" required><option value="">Choose a client…</option>${recipients.map(item => `<option value="${escapeHtml(item.id)}" data-email="${escapeHtml(item.email)}">${escapeHtml(item.name)} — ${escapeHtml(item.email)}</option>`).join('')}</select></label><label>To<input name="to" id="communication-to" type="email" autocomplete="off" required /></label><label class="record-wide">Subject<input name="subject" maxlength="200" required /></label><label class="record-wide">Message<textarea name="message" rows="10" maxlength="10000" required></textarea></label></div><button class="button" type="submit">Send through Outlook <span>→</span></button><div class="form-result" id="communication-result" role="status" aria-live="polite" aria-atomic="true" hidden></div></form>`
+      : `<section class="communication-connect"><div><p class="eyebrow">Outlook communications</p><h2>${microsoft.requiresReauthorization ? 'Approve email access once.' : 'Connect the work mailbox.'}</h2><p>${microsoft.requiresReauthorization ? 'The calendar connection is active, but Outlook needs one additional Mail.Send permission before this dashboard can send client email.' : 'Connect the Love & Sunshine Microsoft work account to send client email from this workspace.'}</p></div>${connectionAction}</section>`;
+    const sent = activities.filter(item => item.activity_type === 'email');
+    return `${composer}${table('Recent client communications', ['Client', 'Summary', 'Details', 'Sent by', 'When', 'Actions'], sent.map(item => [
+      escapeHtml(item.artist?.name || '—'), escapeHtml(item.summary), escapeHtml(item.detail || '—'), escapeHtml(item.actor?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)), editButton('activities', item.id),
+    ]))}`;
+  },
+  files: async () => `<p class="integration-note"><strong>File catalog enabled.</strong> Approved public brand assets remain in the GitHub repository. Connect Cloudflare R2 before uploading private artist files; until then this section stores metadata and references only.</p>${table('File records', ['Name', 'Artist / project', 'Provider', 'Type', 'Status', 'Added', 'Actions'], (await load('file_records')).map(item => [
+    `<strong>${escapeHtml(item.name)}</strong>${item.object_key ? `<small>${escapeHtml(item.object_key)}</small>` : ''}`, escapeHtml(item.artist?.name || item.project?.name || '—'), escapeHtml(friendly(item.storage_provider)), escapeHtml(item.mime_type || '—'), tag(item.status), escapeHtml(date(item.created_at)), editButton('file_records', item.id),
   ]), addButton('file_records', 'Add file reference'))}`,
-  operator: async () => `<section class="operator-hero"><div><p class="eyebrow">Controlled assistant workspace</p><h2>Sunshine Operator</h2><p>Capture decisions, drafts, briefs, and review items now. Model-powered tools remain disabled until an OpenAI project, budget, permissions, and approval rules are confirmed.</p></div>${addButton('operator_items', 'New capture')}</section>${table('Review & capture queue', ['Type', 'Title', 'Risk', 'Status', 'Created by', 'Added'], (await load('operator_items')).map(item => [
+  operator: async () => `<section class="operator-hero"><div><p class="eyebrow">Controlled assistant workspace</p><h2>Sunshine Operator</h2><p>Capture decisions, drafts, briefs, and review items now. Model-powered tools remain disabled until an OpenAI project, budget, permissions, and approval rules are confirmed.</p></div>${addButton('operator_items', 'New capture')}</section>${table('Review & capture queue', ['Type', 'Title', 'Risk', 'Status', 'Created by', 'Added', 'Actions'], (await load('operator_items')).map(item => [
     tag(item.item_type), `<strong>${escapeHtml(item.title)}</strong>${item.content ? `<small>${escapeHtml(item.content)}</small>` : ''}`, tag(item.risk_level),
-    statusSelect('operator_items', item.id, 'status', item.status, ['open', 'draft', 'approved', 'completed', 'dismissed']), escapeHtml(item.creator?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)),
+    statusSelect('operator_items', item.id, 'status', item.status, ['open', 'draft', 'approved', 'completed', 'dismissed']), escapeHtml(item.creator?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)), editButton('operator_items', item.id),
   ]), addButton('operator_items', 'New capture'))}`,
-  vault: async () => `<p class="integration-note"><strong>No passwords are stored here.</strong> This dashboard keeps references to records in a mature password manager such as 1Password or Bitwarden. Never enter secret values into titles, notes, or URLs.</p>${table('Password-manager references', ['Service', 'Manager', 'Artist / project', 'Reference', 'Login', 'Updated'], (await load('vault_links')).map(item => [
-    escapeHtml(item.service_name), escapeHtml(item.manager_name), escapeHtml(item.artist?.name || item.project?.name || 'Workspace'), escapeHtml(item.item_reference || '—'), item.login_url ? `<a href="${escapeHtml(item.login_url)}" target="_blank" rel="noopener">Open service ↗</a>` : '—', escapeHtml(date(item.updated_at)),
+  vault: async () => `<p class="integration-note"><strong>No passwords are stored here.</strong> This dashboard keeps references to records in a mature password manager such as 1Password or Bitwarden. Never enter secret values into titles, notes, or URLs.</p>${table('Password-manager references', ['Service', 'Manager', 'Artist / project', 'Reference', 'Login', 'Updated', 'Actions'], (await load('vault_links')).map(item => [
+    escapeHtml(item.service_name), escapeHtml(item.manager_name), escapeHtml(item.artist?.name || item.project?.name || 'Workspace'), escapeHtml(item.item_reference || '—'), item.login_url ? `<a href="${escapeHtml(item.login_url)}" target="_blank" rel="noopener">Open service ↗</a>` : '—', escapeHtml(date(item.updated_at)), editButton('vault_links', item.id),
   ]), addButton('vault_links', 'Add reference'))}`,
-  team: async () => table('Team & access', ['Name', 'Role', 'Status', 'Added', 'Updated'], (await load('profiles')).map(item => [escapeHtml(item.display_name), tag(item.role), tag(item.active ? 'active' : 'disabled'), escapeHtml(date(item.created_at)), escapeHtml(date(item.updated_at))])),
+  team: async () => table('Team & access', ['Name', 'Role', 'Status', 'Added', 'Updated', 'Actions'], (await load('profiles')).map(item => [escapeHtml(item.display_name), tag(item.role), tag(item.active ? 'active' : 'disabled'), escapeHtml(date(item.created_at)), escapeHtml(date(item.updated_at)), signedInAccount?.profile?.role === 'owner' ? editButton('profiles', item.user_id) : '<span class="muted-copy">Owner only</span>'])),
   audit: async () => table('Audit log', ['Actor', 'Action', 'Target', 'Outcome', 'Changed fields', 'When'], (await load('audit_events')).map(item => [escapeHtml(item.actor?.display_name || 'System'), escapeHtml(friendly(item.action)), escapeHtml(friendly(item.target_type)), tag(item.outcome), escapeHtml((item.metadata?.changed_fields || []).join(', ') || '—'), escapeHtml(dateTime(item.created_at))])),
   settings,
 };
@@ -530,6 +590,40 @@ function bindBillingForm() {
   });
 }
 
+function bindCommunicationForm() {
+  const form = $('#communication-form');
+  if (!form) return;
+  const artist = $('#communication-artist');
+  const recipient = $('#communication-to');
+  const result = $('#communication-result');
+  artist.addEventListener('change', () => {
+    recipient.value = artist.selectedOptions[0]?.dataset.email || '';
+  });
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = $('[type="submit"]', form);
+    submit.disabled = true;
+    submit.textContent = 'Sending through Outlook…';
+    result.hidden = true;
+    result.classList.remove('error');
+    try {
+      const sent = await request('/api/microsoft-calendar?action=send_mail', {
+        method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      result.innerHTML = `<strong>Email sent to ${escapeHtml(sent.recipient)}.</strong>${sent.activityLogged ? '<br>It was also added to the client activity timeline.' : '<br>The email was sent, but the activity timeline could not be updated.'}`;
+      result.hidden = false;
+      form.reset();
+    } catch (error) {
+      result.classList.add('error');
+      result.textContent = error.message;
+      result.hidden = false;
+    } finally {
+      submit.disabled = false;
+      submit.innerHTML = 'Send through Outlook <span>→</span>';
+    }
+  });
+}
+
 async function render(view = 'overview') {
   currentView = view;
   $('#view-content').innerHTML = '<p class="loading">Loading secure workspace…</p>';
@@ -538,7 +632,9 @@ async function render(view = 'overview') {
   try {
     $('#view-content').innerHTML = await pages[view]();
     bindBillingForm();
+    bindCommunicationForm();
     $$('[data-create]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.create).catch(error => alert(error.message))));
+    $$('[data-edit-resource]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.editResource, button.dataset.editId).catch(error => alert(error.message))));
     $$('[data-calendar-shift]').forEach(button => button.addEventListener('click', () => {
       calendarMonthCursor = new Date(calendarMonthCursor.getFullYear(), calendarMonthCursor.getMonth() + Number(button.dataset.calendarShift), 1);
       render('calendar');
