@@ -36,15 +36,15 @@ const resources = {
     required: ['summary'], roles: OPERATORS,
   },
   songs: {
-    select: 'id,project_id,title,alternate_title,status,split_status,genre,musical_key,bpm,iswc,release_date,notes,project:projects(name),created_at,updated_at',
-    create: ['project_id', 'title', 'alternate_title', 'status', 'split_status', 'genre', 'musical_key', 'bpm', 'iswc', 'release_date', 'notes'],
-    update: ['project_id', 'title', 'alternate_title', 'status', 'split_status', 'genre', 'musical_key', 'bpm', 'iswc', 'release_date', 'notes'],
+    select: 'id,title,songwriter_name,songwriter_pro,project_name,status,song_split,genre,musical_key,bpm,date_written,notes,created_at,updated_at',
+    create: ['title', 'songwriter_name', 'songwriter_pro', 'project_name', 'status', 'song_split', 'genre', 'musical_key', 'bpm', 'date_written', 'notes'],
+    update: ['title', 'songwriter_name', 'songwriter_pro', 'project_name', 'status', 'song_split', 'genre', 'musical_key', 'bpm', 'date_written', 'notes'],
     required: ['title'], roles: OPERATORS,
   },
   song_contributors: {
-    select: 'id,song_id,contributor_name,contributor_email,contributor_role,pro_affiliation,publisher,share_percent,confirmed_at,song:songs(title),created_at',
-    create: ['song_id', 'contributor_name', 'contributor_email', 'contributor_role', 'pro_affiliation', 'publisher', 'share_percent', 'confirmed_at'],
-    update: ['contributor_name', 'contributor_email', 'contributor_role', 'pro_affiliation', 'publisher', 'share_percent', 'confirmed_at'],
+    select: 'id,song_id,contributor_name,pro_affiliation,share_percent,confirmed_at,song:songs(title),created_at',
+    create: ['song_id', 'contributor_name', 'pro_affiliation', 'share_percent', 'confirmed_at'],
+    update: ['contributor_name', 'pro_affiliation', 'share_percent', 'confirmed_at'],
     required: ['song_id', 'contributor_name', 'share_percent'], roles: OPERATORS,
   },
   bookings: {

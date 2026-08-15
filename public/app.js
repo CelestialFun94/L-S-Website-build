@@ -148,7 +148,11 @@ function table(title, headings, rows, action = '') {
 }
 
 const tag = value => `<span class="tag ${['active', 'paid', 'confirmed', 'complete'].includes(String(value).toLowerCase()) ? 'green' : ''}">${escapeHtml(friendly(value))}</span>`;
-const date = value => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : '—';
+const date = value => {
+  if (!value) return '—';
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : new Date(value);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(parsed);
+};
 const dateTime = value => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : '—';
 const calendarKey = value => {
   const day = value instanceof Date ? value : new Date(value);
@@ -263,24 +267,24 @@ async function recordDefinition(resource) {
     ] };
   }
   if (resource === 'songs') {
-    const projects = await load('projects');
     return { title: 'Add a song or work', fields: [
-      { name: 'title', label: 'Title', required: true }, { name: 'alternate_title', label: 'Alternate title' },
-      { name: 'project_id', label: 'Project', type: 'select', options: optionList(projects) },
+      { name: 'title', label: 'Title', required: true, wide: true },
+      { name: 'songwriter_name', label: 'Songwriter' }, { name: 'songwriter_pro', label: 'PRO affiliation', placeholder: 'ASCAP, BMI, SESAC…' },
+      { name: 'project_name', label: 'Project', placeholder: 'Album, EP, pitch, catalog…' },
       { name: 'status', label: 'Status', type: 'select', options: status(['draft', 'writing', 'recording', 'mixing', 'mastered', 'released']) },
-      { name: 'split_status', label: 'Split status', type: 'select', options: status(['not_started', 'pending', 'confirmed']) },
+      { name: 'song_split', label: 'Song split', placeholder: 'Freeform split details' },
+      { name: 'date_written', label: 'Date written', type: 'date' },
       { name: 'genre', label: 'Genre' }, { name: 'musical_key', label: 'Key' }, { name: 'bpm', label: 'BPM', type: 'number', min: 20, max: 300 },
-      { name: 'iswc', label: 'ISWC' }, { name: 'release_date', label: 'Release date', type: 'date' }, { name: 'notes', label: 'Notes', type: 'textarea' },
+      { name: 'notes', label: 'Notes', type: 'textarea' },
     ] };
   }
   if (resource === 'song_contributors') {
     const songs = await load('songs');
-    return { title: 'Add a collaborator or split', fields: [
+    return { title: 'Add a publisher', fields: [
       { name: 'song_id', label: 'Song', type: 'select', required: true, options: optionList(songs, item => item.title) },
-      { name: 'contributor_name', label: 'Contributor name', required: true }, { name: 'contributor_email', label: 'Email', type: 'email' },
-      { name: 'contributor_role', label: 'Role', placeholder: 'Songwriter, producer…' },
-      { name: 'share_percent', label: 'Share %', type: 'number', min: 0, max: 100, step: '0.01', required: true },
-      { name: 'pro_affiliation', label: 'PRO affiliation' }, { name: 'publisher', label: 'Publisher / administrator' },
+      { name: 'contributor_name', label: 'Publisher', required: true },
+      { name: 'pro_affiliation', label: 'PRO affiliation', placeholder: 'ASCAP, BMI, SESAC…' },
+      { name: 'share_percent', label: 'Publisher share %', type: 'number', min: 0, max: 100, step: '0.01', required: true },
     ] };
   }
   if (resource === 'bookings') {
@@ -490,13 +494,12 @@ const pages = {
   },
   songs: async () => {
     const [songs, contributors] = await Promise.all(['songs', 'song_contributors'].map(load));
-    const totals = contributors.reduce((map, item) => map.set(item.song_id, (map.get(item.song_id) || 0) + Number(item.share_percent || 0)), new Map());
-    return `<div class="section-stack">${table('Songs & works', ['Song', 'Project', 'Status', 'Splits', 'Share total', 'Release', 'Actions'], songs.map(item => [
+    return `<div class="section-stack">${table('Songs & splits', ['Title', 'Songwriter', 'PRO affiliation', 'Project', 'Song split', 'Status', 'Date written', 'Actions'], songs.map(item => [
       `<strong>${escapeHtml(item.title)}</strong>${item.genre ? `<small>${escapeHtml(item.genre)}${item.bpm ? ` · ${item.bpm} BPM` : ''}</small>` : ''}`,
-      escapeHtml(item.project?.name || '—'), tag(item.status), tag(item.split_status), `<span class="${totals.get(item.id) === 100 ? 'share-ok' : 'share-warning'}">${totals.get(item.id) || 0}%</span>`, escapeHtml(date(item.release_date)), editButton('songs', item.id),
-    ]), addButton('songs', 'Add song'))}${table('Collaborators & ownership claims', ['Song', 'Contributor', 'Role', 'PRO / publisher', 'Share', 'Confirmed', 'Actions'], contributors.map(item => [
-      escapeHtml(item.song?.title || '—'), escapeHtml(item.contributor_name), escapeHtml(friendly(item.contributor_role)), escapeHtml([item.pro_affiliation, item.publisher].filter(Boolean).join(' · ') || '—'), `${escapeHtml(item.share_percent)}%`, item.confirmed_at ? tag('confirmed') : tag('pending'), editButton('song_contributors', item.id),
-    ]), addButton('song_contributors', 'Add collaborator'))}</div>`;
+      escapeHtml(item.songwriter_name || '—'), escapeHtml(item.songwriter_pro || '—'), escapeHtml(item.project_name || '—'), escapeHtml(item.song_split || '—'), tag(item.status), escapeHtml(date(item.date_written)), editButton('songs', item.id),
+    ]), addButton('songs', 'Add song'))}${table('Publisher', ['Song', 'Publisher', 'PRO affiliation', 'Publisher share', 'Confirmed', 'Actions'], contributors.map(item => [
+      escapeHtml(item.song?.title || '—'), escapeHtml(item.contributor_name), escapeHtml(item.pro_affiliation || '—'), `${escapeHtml(item.share_percent)}%`, item.confirmed_at ? tag('confirmed') : tag('pending'), editButton('song_contributors', item.id),
+    ]), addButton('song_contributors', 'Add publisher'))}</div>`;
   },
   invoices: billing,
   inquiries: async () => {
