@@ -471,10 +471,22 @@ const pages = {
     ]), addButton('tasks', 'Add task'));
   },
   activity: async () => {
-    const items = await load('activities');
-    return table('Activity timeline', ['Type', 'Summary', 'Artist', 'Project', 'By', 'When', 'Actions'], items.map(item => [
+    const [items, artists, intakeRequests, microsoft] = await Promise.all([
+      load('activities'), load('artists'), load('intake_requests'),
+      request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, mailEnabled: false })),
+    ]);
+    const recipients = artists.filter(item => item.email);
+    const intakePanel = microsoft.connected && microsoft.mailEnabled
+      ? `<form id="intake-send-form" class="intake-send-panel"><div><p class="eyebrow">Client questionnaire</p><h2>Send artist intake</h2><p>Email a private 30-day questionnaire link through the connected Outlook work account.</p></div><label>Roster contact<select name="artist_id" required><option value="">Choose a client…</option>${recipients.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} — ${escapeHtml(item.email)}</option>`).join('')}</select></label><label>Email subject<input name="subject" value="Love &amp; Sunshine artist intake questionnaire" maxlength="200" required /></label><button class="button" type="submit">Send intake <span>→</span></button><div id="intake-send-result" class="form-result" role="status" aria-live="polite" hidden></div></form>`
+      : `<section class="communication-connect"><div><p class="eyebrow">Client questionnaire</p><h2>Connect Outlook to send intake forms.</h2><p>The questionnaire is ready. Outlook email access is required to send each client a private completion link.</p></div>${microsoft.configured ? '<a class="button button-small" href="/api/microsoft-calendar?action=connect">Connect or reconnect Outlook</a>' : '<span class="setup-needed">Microsoft app registration needed</span>'}</section>`;
+    const requestTable = table('Client intake questionnaires', ['Artist', 'Recipient', 'Status', 'Sent', 'Expires / completed', 'Sent by', 'Response'], intakeRequests.map(item => [
+      escapeHtml(item.artist?.name || '—'), escapeHtml(item.recipient_email), tag(item.status), escapeHtml(dateTime(item.sent_at)),
+      escapeHtml(dateTime(item.completed_at || item.expires_at)), escapeHtml(item.creator?.display_name || 'Team'),
+      `<button class="edit-record" type="button" data-view-intake="${escapeHtml(item.id)}">${item.status === 'completed' ? 'View answers' : 'View status'}</button>`,
+    ]));
+    return `${intakePanel}<div class="section-stack">${requestTable}${table('Activity timeline', ['Type', 'Summary', 'Artist', 'Project', 'By', 'When', 'Actions'], items.map(item => [
       tag(item.activity_type), escapeHtml(item.summary), escapeHtml(item.artist?.name || '—'), escapeHtml(item.project?.name || '—'), escapeHtml(item.actor?.display_name || 'Team'), escapeHtml(dateTime(item.created_at)), editButton('activities', item.id),
-    ]), addButton('activities', 'Log activity'));
+    ]), addButton('activities', 'Log activity'))}</div>`;
   },
   songs: async () => {
     const [songs, contributors] = await Promise.all(['songs', 'song_contributors'].map(load));
@@ -492,11 +504,14 @@ const pages = {
     return items.length ? `<section class="table-panel"><div class="panel-heading"><div><p class="eyebrow">Website leads</p><h2>Inquiries</h2></div></div><div class="inquiry-list">${items.map(item => `<article><div><h3>${escapeHtml(item.name)}</h3><p><a href="mailto:${encodeURIComponent(item.email)}">${escapeHtml(item.email)}</a> · <a href="tel:${encodeURIComponent(item.phone || '')}">${escapeHtml(item.phone || 'No phone')}</a> · Prefers ${escapeHtml(friendly(item.contact_preference || 'email'))} · ${escapeHtml(friendly(item.kind))} · ${escapeHtml(date(item.created_at))}</p><p>${escapeHtml(item.path || (item.availability ? `${item.availability} (${item.time_zone || 'time zone not provided'})` : item.idea) || 'No additional note.')}</p></div><div class="inquiry-actions"><label>Status<select data-inquiry-id="${escapeHtml(item.id)}">${['new', 'reviewing', 'contacted', 'closed'].map(status => `<option value="${status}" ${status === item.status ? 'selected' : ''}>${friendly(status)}</option>`).join('')}</select></label>${editButton('inquiries', item.id)}</div></article>`).join('')}</div></section>` : empty('New public website inquiries will appear here.');
   },
   calendar: async () => {
-    const [bookings, microsoft] = await Promise.all([load('bookings'), request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' }))]);
+    let [bookings, microsoft] = await Promise.all([load('bookings'), request('/api/microsoft-calendar?action=status').catch(() => ({ configured: false, connected: false, status: 'not_configured' }))]);
     let outlookEvents = [];
     let outlookError = null;
     if (microsoft.connected) {
-      try { outlookEvents = (await request('/api/microsoft-calendar?action=events')).data || []; }
+      try {
+        outlookEvents = (await request('/api/microsoft-calendar?action=events')).data || [];
+        bookings = await load('bookings');
+      }
       catch (error) { outlookError = error.message; }
     }
     return `${monthCalendar(outlookEvents, bookings, microsoft, outlookError)}<div class="section-stack">${table('Workspace bookings', ['Event', 'Artist / project', 'Starts', 'Ends', 'Provider', 'Status', 'Location', 'Actions'], bookings.map(item => [
@@ -624,6 +639,58 @@ function bindCommunicationForm() {
   });
 }
 
+function bindIntakeForm() {
+  const form = $('#intake-send-form');
+  if (!form) return;
+  const result = $('#intake-send-result');
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = $('[type="submit"]', form);
+    submit.disabled = true;
+    submit.textContent = 'Sending through Outlook…';
+    result.hidden = true;
+    result.classList.remove('error');
+    try {
+      const sent = await request('/api/microsoft-calendar?action=send_intake', {
+        method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      result.innerHTML = `<strong>Questionnaire sent to ${escapeHtml(sent.recipient)}.</strong><br>The private link expires ${escapeHtml(date(sent.expiresAt))}.`;
+      result.hidden = false;
+      form.reset();
+      setTimeout(() => render('activity'), 1800);
+    } catch (error) {
+      result.textContent = error.message;
+      result.classList.add('error');
+      result.hidden = false;
+    } finally {
+      submit.disabled = false;
+      submit.innerHTML = 'Send intake <span>→</span>';
+    }
+  });
+}
+
+async function openIntakeResponse(requestId) {
+  const data = await request(`/api/intake?request_id=${encodeURIComponent(requestId)}`);
+  $('#intake-response-modal')?.remove();
+  const answered = data.response?.responses || {};
+  const sections = data.questionnaire.map(section => {
+    const rows = section.questions.filter(question => answered[question.id] !== '' && answered[question.id] !== undefined && answered[question.id] !== false).map(question => {
+      const raw = answered[question.id];
+      const value = question.type === 'yesno' ? ({ yes: 'Yes', no: 'No', na: 'N/A' }[raw] || raw) : raw === true ? 'Accepted' : raw;
+      return `<div class="intake-answer"><dt>${escapeHtml(question.label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
+    }).join('');
+    return rows ? `<section><h3>${escapeHtml(section.title)}</h3><dl>${rows}</dl></section>` : '';
+  }).join('');
+  const dialog = document.createElement('dialog');
+  dialog.id = 'intake-response-modal';
+  dialog.className = 'record-modal intake-response-modal';
+  dialog.innerHTML = `<div class="record-modal-card"><button class="dialog-close" type="button" aria-label="Close response">×</button><p class="eyebrow">Client intake</p><h2>${escapeHtml(data.request.artist?.name || data.request.recipient_email)}</h2><p class="muted-copy">${escapeHtml(friendly(data.request.status))} · Sent ${escapeHtml(dateTime(data.request.sent_at))}${data.response?.updated_at ? ` · Last saved ${escapeHtml(dateTime(data.response.updated_at))}` : ''}</p><div class="intake-answer-list">${sections || '<p>No answers have been saved yet.</p>'}</div></div>`;
+  document.body.append(dialog);
+  $('.dialog-close', dialog).addEventListener('click', () => closeModal(dialog));
+  dialog.addEventListener('click', event => { if (event.target === dialog) closeModal(dialog); });
+  openModal(dialog);
+}
+
 async function render(view = 'overview') {
   currentView = view;
   $('#view-content').innerHTML = '<p class="loading">Loading secure workspace…</p>';
@@ -633,8 +700,10 @@ async function render(view = 'overview') {
     $('#view-content').innerHTML = await pages[view]();
     bindBillingForm();
     bindCommunicationForm();
+    bindIntakeForm();
     $$('[data-create]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.create).catch(error => alert(error.message))));
     $$('[data-edit-resource]').forEach(button => button.addEventListener('click', () => openRecordForm(button.dataset.editResource, button.dataset.editId).catch(error => alert(error.message))));
+    $$('[data-view-intake]').forEach(button => button.addEventListener('click', () => openIntakeResponse(button.dataset.viewIntake).catch(error => alert(error.message))));
     $$('[data-calendar-shift]').forEach(button => button.addEventListener('click', () => {
       calendarMonthCursor = new Date(calendarMonthCursor.getFullYear(), calendarMonthCursor.getMonth() + Number(button.dataset.calendarShift), 1);
       render('calendar');

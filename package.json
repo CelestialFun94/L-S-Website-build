@@ -5,7 +5,7 @@
   "description": "Love & Sunshine public website and secure team workspace",
   "scripts": {
     "test": "node --test",
-    "check": "node --check public/app.js && node --check api/_lib.js && node --check api/_stripe.js && node --check api/auth.js && node --check api/inquiries.js && node --check api/dashboard.js && node --check api/billing.js && node --check api/stripe-webhook.js && node --check api/microsoft-calendar.js"
+    "check": "node --check public/app.js && node --check public/intake.js && node --check api/_lib.js && node --check api/_stripe.js && node --check api/_intake-questionnaire.js && node --check api/auth.js && node --check api/inquiries.js && node --check api/intake.js && node --check api/dashboard.js && node --check api/billing.js && node --check api/stripe-webhook.js && node --check api/microsoft-calendar.js"
   },
   "engines": {
     "node": "24.x"

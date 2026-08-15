@@ -38,9 +38,11 @@ Confirm the legal business name, domain, public email, invoice terms, internal r
 ## Outlook Calendar through GoDaddy Microsoft 365
 
 - Register a confidential web application in Microsoft Entra and add the exact redirect URI `https://loveandsunshinenash.com/api/microsoft-calendar?action=callback`.
-- Add delegated Microsoft Graph permissions `User.Read` and `Calendars.ReadWrite`. The application also requests `openid`, `profile`, `email`, and `offline_access` during authorization.
+- Add delegated Microsoft Graph permissions `User.Read`, `Calendars.ReadWrite`, and `Mail.Send`. The application also requests `openid`, `profile`, `email`, and `offline_access` during authorization.
 - GoDaddy credentials are entered only on GoDaddy/Microsoft-controlled sign-in pages. The application stores Microsoft tokens encrypted with `INTEGRATION_ENCRYPTION_KEY`; it never stores the account password.
 - The calendar owner connects and disconnects from **Admin dashboard → Calendar** or **Setup & connections**.
+- Opening Calendar automatically synchronizes Outlook occurrences from the prior year through the next two years into workspace bookings, including recurring events and events earlier in the current week.
+- Activity can send the artist intake questionnaire through the connected mailbox. Links expire after 30 days, store only a SHA-256 token hash, and can be saved before final submission.
 
 ## Stripe billing
 

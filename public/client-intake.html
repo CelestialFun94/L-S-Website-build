@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#fff5d4" />
+  <title>Artist Intake | Love &amp; Sunshine</title>
+  <link rel="stylesheet" href="/intake.css" />
+</head>
+<body>
+  <a class="skip-link" href="#intake-main">Skip to questionnaire</a>
+  <header class="intake-header">
+    <a class="intake-brand" href="/" aria-label="Love and Sunshine home"><img src="/images/brand/sun-heart-mark.jpg" alt="" /><strong>Love &amp; Sunshine</strong></a>
+    <span>Private artist intake</span>
+  </header>
+  <main id="intake-main">
+    <section class="intake-hero">
+      <p class="eyebrow">Love &amp; Sunshine</p>
+      <h1>Tell us where you are—and where you want to go.</h1>
+      <p>This private questionnaire helps us understand your music, business, goals and creative world. Save at any time and return through the link in your email.</p>
+    </section>
+    <section id="intake-status" class="intake-status" role="status" aria-live="polite">Loading your private questionnaire…</section>
+    <form id="intake-form" hidden novalidate>
+      <div class="progress-card">
+        <div><strong id="progress-label">0% answered</strong><span id="save-state">Not saved yet</span></div>
+        <progress id="intake-progress" max="100" value="0">0%</progress>
+      </div>
+      <div id="intake-sections" class="intake-sections"></div>
+      <section class="intake-actions" aria-label="Questionnaire actions">
+        <button class="secondary" type="button" id="save-intake">Save and finish later</button>
+        <button class="primary" type="submit">Submit completed intake <span aria-hidden="true">→</span></button>
+      </section>
+      <div id="intake-result" class="intake-result" role="status" aria-live="polite" hidden></div>
+    </form>
+  </main>
+  <footer><p>Need help completing this form? Email <a href="mailto:becca@loveandsunshinenash.com">becca@loveandsunshinenash.com</a>.</p></footer>
+  <script src="/intake.js" defer></script>
+</body>
+</html>

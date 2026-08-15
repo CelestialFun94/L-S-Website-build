@@ -81,6 +81,10 @@ const resources = {
     useAdmin: true,
     roles: OWNERS,
   },
+  intake_requests: {
+    select: 'id,artist_id,recipient_email,status,sent_at,expires_at,completed_at,artist:artists(name),creator:profiles(display_name),created_at,updated_at',
+    readRoles: OPERATORS,
+  },
   audit_events: {
     select: 'id,actor_user_id,action,target_type,target_id,outcome,metadata,actor:profiles(display_name),created_at',
   },
@@ -156,8 +160,17 @@ module.exports = async function handler(req, res) {
     if (!config) return json(res, 400, { error: 'Unknown workspace resource.' });
 
     if (req.method === 'GET') {
+      if (config.readRoles && !config.readRoles.has(current.profile.role)) return json(res, 403, { error: 'Your role cannot view this section.' });
       const order = ['bookings'].includes(resource) ? 'starts_at.asc' : 'created_at.desc';
-      const data = await api(current.access, `/rest/v1/${resource}?select=${encodeURIComponent(config.select)}&order=${order}&limit=250`);
+      const path = `/rest/v1/${resource}?select=${encodeURIComponent(config.select)}&order=${order}&limit=250`;
+      const data = config.useAdminRead
+        ? await (async () => {
+          const response = await adminSupabase(path);
+          const result = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(result?.message || result?.error || 'Workspace request failed.');
+          return result;
+        })()
+        : await api(current.access, path);
       return json(res, 200, { data });
     }
 
